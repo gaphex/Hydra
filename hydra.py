@@ -19,10 +19,10 @@ class Hydra():
         self.processes = []
         self.version = '1.0'
         self.batchSize = 175
+        self.proxyList = None
         self.streaming = False
         self.tweetStack = Queue()
         self.auths = initAPIKeys()
-        self.proxyList = proxyList
         self.output = 'tweetDB.json'
         self.mode = 'geo' #['morph', 'geo']
 
