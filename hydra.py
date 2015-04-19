@@ -14,7 +14,7 @@ from tweety.streaming import Stream
 class Hydra():
     def __init__(self):
         self.threads = 5
-        self.timeout = 120
+        self.timeout = 30
         self.lock = Lock()
         self.processes = []
         self.version = '1.0'
