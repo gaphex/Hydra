@@ -13,9 +13,9 @@ def checkOut(ip):
         urllib2.urlopen(req, timeout=3)
         print ip['http'], 'passed'
         return ip
-    except urllib2.HTTPError:
-        return None
-    except Exception:
+
+    except Exception as e:
+        print ip['http'], 'failed:', e
         return None
 
 
