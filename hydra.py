@@ -14,17 +14,17 @@ from tweety.streaming import Stream
 class Hydra():
     def __init__(self):
         self.threads = 5
-        self.timeout = 30
-        self.lock = Lock()
+        self.lifespan = 60
         self.processes = []
-        self.version = '1.0'
+        self.version = '1.01'
         self.batchSize = 175
         self.proxyList = None
         self.streaming = False
+        self.lock = masterLock
         self.tweetStack = Queue()
         self.auths = initAPIKeys()
         self.output = 'tweetDB.json'
-        self.mode = 'geo' #['morph', 'geo']
+        self.mode = 'morph' #['morph', 'geo']
 
     def run(self):
         print 'Running Hydra', self.version, 'in', self.mode, 'mode'
@@ -32,31 +32,36 @@ class Hydra():
 
     def main(self):
         while True:
+            self.tweetStack = Queue()
             try:
-                self.tweetStack = Queue()
                 if not self.proxyList:
                     self.refreshProxies()
 
                 if self.mode == 'morph':
+                    from meta import metadata
                     self.meta = metadata
                     self.processes = [mp.Process(target=openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
                                                                           self.meta[x]['pID'], self.proxyList[x],
                                                                           self.batchSize, self)) for x in range(self.threads)]
-
                 if self.mode == 'geo':
+                    from meta import geodata
                     self.meta = geodata
                     self.processes = [mp.Process(target=openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
                                                                           self.meta[x]['pID'], self.proxyList[x],
                                                                           self.batchSize, self)) for x in range(self.threads)]
 
-                self.startStreaming()
-                time.sleep(self.timeout)
+                self.printMapping()
+                self.initiateStreaming()
+                time.sleep(self.lifespan)
                 self.terminateStreaming()
 
             finally:
                 self.executeBatch(self.output)
+                print 'Reconnecting...'
 
-    def startStreaming(self):
+
+    def initiateStreaming(self):
+        print 'Listening to', self.threads, 'data streams...'
         if self.streaming is False:
             for p in self.processes:
                 p.start()
@@ -68,39 +73,51 @@ class Hydra():
                 p.terminate()
             self.streaming = False
 
+    def printMapping(self):
+        print ''
+        print '--------------Proxy Map----------------'
+        for i in range(self.threads):
+            print self.meta[i]['pID'], 'proxied to', self.proxyList[i]['http']
+        print ''
+
     def executeBatch(self, json_filename):
         self.lock.acquire()
+
         buffer = []
         try:
             while not self.tweetStack.empty():
-                tweet = self.tweetStack.get()
+                tweet = self.tweetStack.get(timeout = 3)
                 buffer.append(tweet)
-            try:
-                json_file = open(json_filename,'r')
-                json_data = json.load(json_file)
+            u = len(buffer)
+
+            if u:
+                try:
+                    json_file = open(json_filename,'r')
+                    json_data = json.load(json_file)
+                    json_file.close()
+                except:
+                    json_data = []
+
+                for tweet in buffer:
+                    json_data.append({'user': tweet.userID, 'tweet': tweet.tweetID, 'text': tweet.text,
+                                      'created_at': tweet.createdAt, 'location': tweet.location})
+
+                json_file = open(json_filename,'w')
+                json_file.write(json.dumps(json_data, cls=DateTimeEncoder))
                 json_file.close()
-                print 'Successfully read', len(json_data), 'entities from', json_filename
-            except:
-                json_data = []
 
-            for tweet in buffer:
-                json_data.append({'user': tweet.userID, 'tweet': tweet.tweetID, 'text': tweet.text,
-                                  'created_at': tweet.createdAt, 'location': tweet.location})
-
-            json_file = open(json_filename,'w')
-            json_file.write(json.dumps(json_data, cls=DateTimeEncoder))
-            json_file.close()
-
-            print 'Successfully wrote', len(buffer), 'entities to', json_filename
+                print 'Successfully wrote', u, 'entities to', json_filename
 
         except Exception as e:
-            print 'Exception', e, 'caught while writing to database'
+            print e, 'exception caught while writing to database'
 
         finally:
             self.lock.release()
 
     def refreshProxies(self):
+        self.lock.acquire()
         self.proxyList = fetchProxies(self.threads)
+        self.lock.release()
 
     def handleNewTweet(self, pID, tweet):
         self.lock.acquire()
@@ -155,10 +172,13 @@ def getLocationCoordinates(location):
         return None
 
 if __name__ == "__main__":
+    masterLock = Lock()
+
     while True:
         try:
             hydra = Hydra()
             hydra.run()
         except Exception as e:
-            print 'Caught exception', e, 'while running Hydra'
+            print e, 'exception caught while running Hydra, reloading...'
+
 

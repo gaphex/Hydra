@@ -8,7 +8,6 @@ from __future__ import absolute_import, print_function
 
 import logging
 import requests
-import random
 from requests.exceptions import Timeout
 from threading import Thread
 from time import sleep
@@ -20,7 +19,6 @@ import ssl
 from tweepy.models import Status
 from tweepy.api import API
 from tweepy.error import TweepError
-
 from tweepy.utils import import_simplejson
 json = import_simplejson()
 
@@ -219,8 +217,6 @@ class Stream(object):
         
         self.session = requests.Session()
         self.session.proxies = self.proxyServer
-        print('proxied', self.pID, 'to', self.proxyServer['http'])
-        
         self.session.headers = self.headers
         self.session.params = None
 

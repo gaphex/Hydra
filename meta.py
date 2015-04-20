@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-metadata = [{'pID': 'GTA', 'track': ['GTA']},
-            {'pID': 'Putin', 'track': ['Putin']},
-            {'pID': 'ISIS', 'track': ['ISIS']},
-            {'pID': 'SW', 'track': ['Star Wars']},
-            {'pID': 'UKR', 'track': ['Ukraine']}]
+metadata = [{'pID': 'GTA     ', 'track': ['GTA']},
+            {'pID': 'Avengers', 'track': ['Avengers']},
+            {'pID': 'MK: X   ', 'track': ['MKX']},
+            {'pID': 'StarWars', 'track': ['Star Wars']},
+            {'pID': 'ISIS    ', 'track': ['ISIS']}]
 
 geodata = [{'pID': 'NY    ', 'crds': [-74.40, 40.45, -71.79, 41.23]},
            {'pID': 'Moscow', 'crds': [37.32, 55.49, 37.97, 55.96]},
@@ -15,11 +15,15 @@ geodata = [{'pID': 'NY    ', 'crds': [-74.40, 40.45, -71.79, 41.23]},
 
 proxyList = [{'http': 'http://117.135.250.69:81'},{'http': 'http://62.201.200.5:80'},
              {'http': 'http://218.204.140.104:8118'},{'http': 'http://101.69.199.99:80'},
-             {'http': 'http://213.85.92.10:80'},{'http': 'http://183.207.228.51:82'},
+             {'http': 'http://183.207.228.51:82'}, {'http': 'http://218.204.140.104:8118'},
              {'http': 'http://183.203.208.177:8001'},{'http': 'http://183.207.228.51:82'},
-             {'http': 'http://213.85.92.10:80'},{'http': 'http://183.203.208.169:8001'},
              {'http': 'http://101.69.199.99:80'},{'http': 'http://62.201.200.5:8080'},
-             {'http': 'http://183.207.228.116:80'},{'http': 'http://222.161.248.122:80'}]
+             {'http': 'http://183.207.228.116:80'},{'http': 'http://183.207.228.51:82'},
+             {'http': 'http://213.85.92.10:80'},{'http': 'http://111.11.153.19:9999'},
+             {'http': 'http://121.14.4.111:80'},{'http': 'http://122.94.12.76:8118'},
+             {'http': 'http://101.69.199.99:80'},{'http': 'http://213.119.99.86:80'},
+             {'http': 'http://219.142.192.196:1877'},{'http': 'http://111.11.153.19:8888'},
+             {'http': 'http://62.201.200.5:8080'},{'http': 'http://59.127.178.95:8888'}]
 
 CONSUMER_KEY = ['KpfGPpsl5Dn03Lb5wzvQfEaMc',
                 '13AqFSrFdFv7rdLVOGvzJCkmp',
