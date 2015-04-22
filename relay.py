@@ -28,10 +28,11 @@ class DateTimeEncoder(json.JSONEncoder):
 
 class CustomStreamListener(tweepy.StreamListener):
 
-    def __init__(self, streamHandler, pID, batchSize):
+    def __init__(self, dataHandler, streamHandler, pID, pDesc):
         self.pID = pID
-        self.size = batchSize
+        self.pDesc = pDesc
         super(CustomStreamListener, self ).__init__()
+        self.dataHandler = dataHandler
         self.streamHandler = streamHandler
 
     def on_status(self, status):
@@ -45,11 +46,10 @@ class CustomStreamListener(tweepy.StreamListener):
             usr = status.author.screen_name.strip()
             location = status.author.location.strip()
             tweet = Tweet(tid,usr,txt,src,cat,timezone,location,geodatum)
-            self.streamHandler.handleNewTweet(self.pID, tweet)
+            self.dataHandler.handleNewTweet(self.pID, self.pDesc, tweet)
 
         except Exception as e:
             # Most errors we're going to see relate to the handling of UTF-8 messages (sorry)
-            self.streamHandler.refreshProxies()
             print(e)
 
     def on_error(self, status_code):
