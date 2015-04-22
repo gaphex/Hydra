@@ -22,7 +22,7 @@ class Hydra():
         self.streaming = False
         self.lock = masterLock
         self.auths = initAPIKeys()
-        self.batchesPerStream = 50
+        self.batchesPerStream = 30
         self.mode = mode
 
     def run(self):
@@ -123,11 +123,11 @@ class dataHandler():
         finally:
             self.lock.release()
 
-    def printScore(self, score):
+    def printScore(self, score, v):
         print ''
-        print '     ---------------------------------------'
-        print 'Successfully wrote', score, 'entities to', self.db_filename
-        print '     ---------------------------------------'
+        print '       -------------------------------------------------------'
+        print 'Successfully wrote', score, 'entities to', self.db_filename, 'for a total of', v
+        print '       -------------------------------------------------------'
         print ''
 
     def readFrom(self, dbname):
@@ -166,7 +166,7 @@ class dataHandler():
                 self.writeTo(self.db_filename, json_data)
                 json_data, v = self.readFrom(self.db_filename)
                 score = v - u
-                self.printScore(score)
+                self.printScore(score, v)
 
 
         except Exception as e:
@@ -180,7 +180,7 @@ class dataHandler():
 if __name__ == "__main__":
     masterLock = Lock()
     nP = 5
-    mode = 'geo'    #['morph', 'geo']
+    mode = 'geo'
 
     while True:
         try:
@@ -189,6 +189,8 @@ if __name__ == "__main__":
             hydra.run()
         except Exception as e:
             print e, 'exception caught while running Hydra, reloading...'
+
+
 
 
 
