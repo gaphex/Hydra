@@ -42,6 +42,8 @@ def fetchProxies(n):
         if response:
             if response not in responseList:
                 responseList.append(response)
+            else:
+                print 'found dupe proxy:', response
     return responseList
 
 

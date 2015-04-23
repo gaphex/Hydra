@@ -7,13 +7,12 @@ from relay import *
 from proxycheck import *
 from supplement import *
 import multiprocessing as mp
+from cerberus import dataHandler
 from multiprocessing import Lock
-from multiprocessing import Queue
 from tweety.streaming import Stream
 
-
 class Hydra():
-    def __init__(self):
+    def __init__(self, nP, masterLock, mode):
         self.threads = nP
         self.lifespan = 600
         self.processes = []
@@ -56,9 +55,10 @@ class Hydra():
             except Exception as e:
                 print e, 'exception caught while listening to streams'
             finally:
-                dataHandler.executeBatch()
-                dataHandler.initQueues()
+                dataHandler.reboot()
+                print ''
                 print 'Reconnecting...'
+                print ''
 
 
     def initiateStreaming(self):
@@ -88,6 +88,7 @@ class Hydra():
 
     def process(self):
         batchspan = int(self.lifespan/self.batchesPerStream)
+
         for i in range (self.batchesPerStream):
             time.sleep(batchspan)
             dataHandler.executeBatch()
@@ -101,94 +102,27 @@ class Hydra():
             sapi.filter(locations=filter)
 
 
-
-class dataHandler():
-    def __init__(self):
-        self.lock = masterLock
-        self.db_filename = 'tweetDB.json'
-        self.initQueues()
-
-    def initQueues(self):
-        self.stacks = []
-
-        for i in range(nP):
-            self.stacks.append(Queue())
-
-    def handleNewTweet(self, pID, pDesc, tweet):
-        self.lock.acquire()
-        try:
-            self.stacks[int(pID)].put(tweet)
-            print pDesc, ':    ', tweet.text
-
-        finally:
-            self.lock.release()
-
-    def printScore(self, score, v):
-        print ''
-        print '       -------------------------------------------------------'
-        print 'Successfully wrote', score, 'entities to', self.db_filename, 'for a total of', v
-        print '       -------------------------------------------------------'
-        print ''
-
-    def readFrom(self, dbname):
-        json_file = open(dbname,'r')
-        json_data = json.load(json_file)
-        json_file.close()
-        return (json_data,len(json_data))
-
-    def writeTo(self, dbname, json_data):
-        json_file = open(self.db_filename,'w')
-        json_file.write(json.dumps(json_data, cls=DateTimeEncoder))
-        json_file.close()
-
-    def executeBatch(self):
-        self.lock.acquire()
-        buffer = []
-        json_data = []
-        try:
-            for stack in self.stacks:
-
-                while not stack.empty():
-                    tweet = stack.get(timeout = 3)
-                    buffer.append(tweet)
-
-            if len(buffer):
-                try:
-                    json_data, u = self.readFrom(self.db_filename)
-                except Exception as e:
-                    print e
-                    pass
-
-                for tweet in buffer:
-                    json_data.append({'user': tweet.userID, 'tweet': tweet.tweetID, 'text': tweet.text,
-                                      'created_at': tweet.createdAt, 'location': tweet.location})
-
-                self.writeTo(self.db_filename, json_data)
-                json_data, v = self.readFrom(self.db_filename)
-                score = v - u
-                self.printScore(score, v)
-
-
-        except Exception as e:
-            print e, 'exception caught while writing to database'
-
-        finally:
-            self.lock.release()
-
-
-
 if __name__ == "__main__":
+
     masterLock = Lock()
-    nP = 5
     mode = 'geo'
+    db = 'SQL'
+    nP = 5
 
     while True:
         try:
-            dataHandler = dataHandler()
-            hydra = Hydra()
+            dataHandler = dataHandler(nP, masterLock, db)
+            hydra = Hydra(nP, masterLock, mode)
             hydra.run()
+
         except Exception as e:
-            print e, 'exception caught while running Hydra, reloading...'
+            if str(e) == 'Cannot operate on a closed database.':
+                print ''
+                print '--------------Shutting Down----------------'
+                break
+            else:
+                print e, 'exception caught while running Hydra, reloading...'
+                time.sleep(3)
 
 
 

@@ -6,6 +6,8 @@
 *.pyc
 *.ipynb
 *.json
+tweetDB.json
+
 
 ## Directory-based project format:
 .idea/
