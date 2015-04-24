@@ -27,7 +27,7 @@ class dataHandler():
         self.lock.acquire()
         try:
             self.stacks[int(pID)].put(tweet)
-            print pDesc, ':    ', tweet.text
+            #print pDesc, ':    ', tweet.text
 
         finally:
             self.lock.release()

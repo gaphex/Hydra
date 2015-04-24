@@ -7,8 +7,8 @@ metadata = [{'pID': 0, 'pDesc': 'GTA     ', 'track': ['GTA']},
             {'pID': 3, 'pDesc': 'StarWars', 'track': ['Star Wars']},
             {'pID': 4, 'pDesc': 'ISIS    ', 'track': ['ISIS']}]
 
-geodata = [{'pID': 0, 'pDesc': 'NY    ', 'crds': [-74.40, 40.45, -71.79, 41.23]},
-           {'pID': 1, 'pDesc': 'Moscow', 'crds': [37.32, 55.49, 37.97, 55.96]},
+geodata = [{'pID': 0, 'pDesc': 'Moscow', 'crds': [37.32, 55.49, 37.97, 55.96]},
+           {'pID': 1, 'pDesc': 'NY    ', 'crds': [-74.40, 40.45, -71.79, 41.23]},
            {'pID': 2, 'pDesc': 'Calif ', 'crds': [-123.07, 36.89, -120.79, 39.14]},
            {'pID': 3, 'pDesc': 'Dubai ', 'crds': [54.90, 24.95, 55.63, 25.41]},
            {'pID': 4, 'pDesc': 'Berlin', 'crds': [12.92, 52.31, 13.76, 52.70]}]
@@ -22,8 +22,7 @@ proxyList = [{'http': 'http://62.201.200.5:80'},{'http': 'http://113.253.44.78:8
              {'http': 'http://183.207.228.116:80'},{'http': 'http://183.207.228.51:82'},
              {'http': 'http://213.85.92.10:80'},{'http': 'http://111.11.153.19:9999'},
              {'http': 'http://121.14.4.111:80'},{'http': 'http://122.94.12.76:8118'},
-             {'http': 'http://111.11.153.19:8888'},
-             {'http': 'http://62.201.200.5:8080'},{'http': 'http://59.127.178.95:8888'}]
+             {'http': 'http://111.11.153.19:8888'},{'http': 'http://59.127.178.95:8888'}]
 
 CONSUMER_KEY = ['KpfGPpsl5Dn03Lb5wzvQfEaMc',
                 '13AqFSrFdFv7rdLVOGvzJCkmp',

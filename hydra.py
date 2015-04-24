@@ -16,7 +16,7 @@ class Hydra():
         self.threads = nP
         self.lifespan = 600
         self.processes = []
-        self.version = '1.02'
+        self.version = '1.03'
         self.proxyList = None
         self.streaming = False
         self.lock = masterLock
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     masterLock = Lock()
     mode = 'geo'
-    db = 'SQL'
+    db = 'JSON'
     nP = 5
 
     while True:
