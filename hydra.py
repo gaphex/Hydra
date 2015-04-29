@@ -5,7 +5,7 @@ __author__ = 'denisantyukhov'
 import time
 from relay import *
 from proxycheck import *
-from supplement import *
+from oracle import *
 import multiprocessing as mp
 from cerberus import dataHandler
 from multiprocessing import Lock
@@ -20,7 +20,7 @@ class Hydra():
         self.proxyList = None
         self.streaming = False
         self.lock = masterLock
-        self.auths = initAPIKeys()
+        self.auths = initAPIKeys(nP)
         self.batchesPerStream = 30
         self.mode = mode
 
@@ -106,8 +106,8 @@ if __name__ == "__main__":
 
     masterLock = Lock()
     mode = 'geo'
-    db = 'JSON'
-    nP = 5
+    db = 'SQL'
+    nP = 1
 
     while True:
         try:

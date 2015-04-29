@@ -1,19 +1,22 @@
 __author__ = 'denisantyukhov'
 from multiprocessing import Queue
+from oracle import Oracle
 import _sqlite3
 import json
+
 
 class dataHandler():
     def __init__(self, nP, masterLock, mode):
         self.nP = nP
         self.mode = mode
+        self.totalScore = 0
+        self.oracle = Oracle()
         self.lock = masterLock
         self.json_db_filename = 'tweetDB.json'
         self.SQL_db_filename = 'tweets.db'
         self.initResources()
 
     def initResources(self):
-        self.totalScore = 0
         self.stacks = []
 
         for i in range(self.nP):
@@ -31,7 +34,7 @@ class dataHandler():
         self.lock.acquire()
         try:
             self.stacks[int(pID)].put(tweet)
-            #print pDesc, ':    ', tweet.text
+            print pDesc, ':    ', tweet.text
 
         finally:
             self.lock.release()
