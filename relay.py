@@ -33,8 +33,6 @@ class CustomStreamListener(tweepy.StreamListener):
     def on_status(self, status):
         try:
             raw = str(status)
-
-
             tid = status.id_str
             cat = status.created_at
             txt = status.text.strip()
@@ -46,7 +44,6 @@ class CustomStreamListener(tweepy.StreamListener):
             if not location:
                 location = self.oracle.findInRaw('country', raw)
             boundbox = self.oracle.findInRaw('bounding_box', raw)
-            print boundbox, location
             tweet = Tweet(tid, usr, txt, src, cat, timezone, location, geodatum, boundbox)
 
             self.dataHandler.handleNewTweet(self.pID, self.pDesc, tweet)

@@ -17,12 +17,29 @@ proxyList = [{'http': 'http://62.201.200.5:80'},{'http': 'http://113.253.44.78:8
              {'http': 'http://120.131.128.211:80'},{'http': 'http://222.49.128.229:8118'},
              {'http': 'http://106.38.251.62:8088'},{'http': 'http://120.132.50.69:8080'},
              {'http': 'http://183.203.22.76:80'},{'http': 'http://78.140.197.254:3128'},
-             {'http': 'http://218.204.140.104:8118'},{'http': 'http://218.204.140.104:8118'},
+             {'http': 'http://218.204.140.104:8118'},
              {'http': 'http://183.203.208.177:8001'},{'http': 'http://62.201.200.5:8080'},
              {'http': 'http://183.207.228.116:80'},{'http': 'http://183.207.228.51:82'},
              {'http': 'http://213.85.92.10:80'},{'http': 'http://111.11.153.19:9999'},
-             {'http': 'http://121.14.4.111:80'},{'http': 'http://122.94.12.76:8118'},
-             {'http': 'http://111.11.153.19:8888'},{'http': 'http://59.127.178.95:8888'}]
+             {'http': 'http://121.14.4.111:80'},{'http': 'http://122.94.12.76:8118'}]
+
+alchemyKEY = ['07ea6895c88e1c2797e9d0aa123cb66be86b4263',
+              'c5f7096984ed1f9e7cb188ae3d47b23149986881',
+              '63026da450ab17cac45b5d7edc959e27d80e4144',
+              '613ff3c4201c8e2555616a39f48374bc1c5b9baa',
+              '79b1533462ac3ab9997959c48ba3a04c76bb40b6',
+              '848e305062d1aaa5ced7b1de8ab217cfffe6b04e',
+              '3027eb6c9c928aba2e56caee34494ca0f1061b72',
+              'c44d4c75fc8aea9fa331884386ba5cd5b1625c92',
+              'f4a4c28ca4877b99a63860a2115925ea8c345b9d',
+              'dda49b90039d1388814241dfaa136d8cf3cfdea4',
+              'da85c31da0a47e8cdfdfaa8ed528f04ebbbca6a1',
+              'ef2ca19a69dc0e3c3f4478f67114528b444a1ce3',
+              '115bbb0fd7b4cb50f7d696392b599aca820f41f4',
+              '3e62447bb979222c7a747949ef056ca13d0d5eed',
+              '624f83980b1850bc0ab8589daf3f8048e284b0f2',
+              'ac98aac5461b5aef5c8d012a4d817f366b0e7dc8']
+
 
 CONSUMER_KEY = ['KpfGPpsl5Dn03Lb5wzvQfEaMc',
                 '13AqFSrFdFv7rdLVOGvzJCkmp',

@@ -13,6 +13,8 @@ from tweety.streaming import Stream
 
 class Hydra():
     def __init__(self, nP, masterLock, mode):
+
+        self.mode = mode
         self.threads = nP
         self.lifespan = 600
         self.processes = []
@@ -20,9 +22,8 @@ class Hydra():
         self.proxyList = None
         self.streaming = False
         self.lock = masterLock
-        self.auths = initAPIKeys(nP)
         self.batchesPerStream = 30
-        self.mode = mode
+        self.auths = self.initAPIKeys(nP)
 
     def run(self):
         print 'Running Hydra', self.version, 'in', self.mode, 'mode'
@@ -92,6 +93,15 @@ class Hydra():
         for i in range (self.batchesPerStream):
             time.sleep(batchspan)
             dataHandler.executeBatch()
+
+    def initAPIKeys(self, nP):
+        auths = []
+
+        for i in range(nP):
+            auth = tweepy.OAuthHandler(CONSUMER_KEY[i], CONSUMER_SECRET[i])
+            auth.set_access_token(OAUTH_TOKEN[i], OAUTH_TOKEN_SECRET[i])
+            auths.append(auth)
+        return auths
 
     def openStream(self, auth ,mode, filter, pID, pDesc, proxy, dataHandler, streamHandler):
         sapi = Stream(auth, CustomStreamListener(dataHandler, streamHandler, pID, pDesc), pID, proxy)

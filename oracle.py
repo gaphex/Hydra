@@ -1,15 +1,23 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 import requests
 import tweepy
 from meta import *
+import json
 import ast
+import re
+from pyalchemy import alchemyapi
+
 
 
 class Oracle():
+
     def __init__(self):
         self.key = 'AIzaSyCtaVbVYJrHPdbkj_gpxQWktZ-_5sJRyVk'
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
-
+        self.alchemyAPI = alchemyapi.AlchemyAPI()
+        self.emo_db = json.load(open('pyalchemy/emoji_database','r'))
 
     def requestCoordinates(self, location):
         response = requests.get(self.gmaps, params={'address' : location, 'key' : self.key})
@@ -25,7 +33,6 @@ class Oracle():
 
     def findInRaw(self, request, raw):
         u = raw.find(request)
-
         if u != -1:
             try:
                 if request == 'bounding_box':
@@ -40,27 +47,38 @@ class Oracle():
         else:
             return 0
 
-    def whereIsIt(self, tweet):
-        if tweet.geodata:
-            geodata = tweet.geodata['coordinates']
-            tweet.trueLocation = {'lat':geodata[0], 'lon':geodata[1]}
-        elif len(tweet.location):
-            apiResponse = self.requestCoordinates(tweet.location)
-            tweet.trueLocation['lat'] = apiResponse['lat']
-            tweet.trueLocation['lon'] = apiResponse['lng']
-            tweet.trueLocation['text'] = apiResponse['formatted_address']
-        else:
-            tweet.trueLocation = None
-        print tweet.trueLocation
+    def howIsIt(self, myText):
+        sc = self.resolveEmoji(myText)
+        if sc:
+            myText = myText + sc
+        URLless_txt = re.sub(r'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}     /)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?«»“”‘’]))', '', myText)
+        Nickless_txt = ' '.join([word for word in URLless_txt.split() if not word.startswith('@')])
+        response = self.alchemyAPI.sentiment('text', Nickless_txt)
 
-def initAPIKeys(nP):
-    auths = []
+        try:
+            if response['statusInfo'] == 'daily-transaction-limit-exceeded':
+                print '----------alchemy transaction limit reached----------'
+                self.alchemyAPI.initResources()
+            if response['status'] == 'OK':
+                if 'score' in response['docSentiment']:
+                    return response['docSentiment']['type'],response['docSentiment']['score']
+            if response is None:
+                print ('error')
+                response = 0
 
-    for i in range(nP):
-        auth = tweepy.OAuthHandler(CONSUMER_KEY[i], CONSUMER_SECRET[i])
-        auth.set_access_token(OAUTH_TOKEN[i], OAUTH_TOKEN_SECRET[i])
-        auths.append(auth)
-    return auths
+        except Exception as e:
+            pass
+
+        finally:
+            return response['docSentiment']
+
+    def resolveEmoji(self, myText):
+        emostr = []
+        emo_db = self.emo_db
+        b = myText.encode('unicode_escape').split('\\')
+        c = [point.replace('000','+').upper() for point in b if len(point) > 8 and point[0] == 'U']
+        [emostr.append(emo_db[emo[:7]]) for emo in c if emo[:7] in emo_db]
+        return ' '.join(emostr)
 
 
 
