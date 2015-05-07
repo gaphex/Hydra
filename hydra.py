@@ -125,7 +125,7 @@ if __name__ == "__main__":
     db = 'SQL'
     key = raw_input('Enter Password: ')
     keychain = 'keys.py'
-    nP = 4
+    nP = 1
 
     while True:
         try:
@@ -134,6 +134,7 @@ if __name__ == "__main__":
             hydra.run()
 
         except KeyboardInterrupt:
+            hydra.terminateStreaming()
             print '--------------Shutting Down----------------'
             break
 
