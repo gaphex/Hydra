@@ -48,7 +48,7 @@ class Hydra():
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'], self.proxyList[x],
                                                                           dataHandler, self)) for x in range(self.threads)]
 
-                self.printMapping()
+                #self.printMapping()
                 self.initiateStreaming()
                 self.process()
                 self.terminateStreaming()

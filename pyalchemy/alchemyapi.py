@@ -73,23 +73,21 @@ class AlchemyAPI:
     ENDPOINTS['taxonomy']['html'] = '/html/HTMLGetRankedTaxonomy'
     ENDPOINTS['taxonomy']['text'] = '/text/TextGetRankedTaxonomy'
     BASE_URL = 'http://access.alchemyapi.com/calls'
-    APIkeylist = alchemyKEY
-
 
     def __init__(self):
+        self.APIkeylist = alchemyKEY
         self.initResources()
-        #self.s.proxies = myProxy
-        #proxy = urllib2.ProxyHandler({'http': myProxy['http']})
-        #opener = urllib2.build_opener(proxy)
-        #myProxy = fetchProxies(1)[0]
 
     def initResources(self):
-        random.shuffle(self.APIkeylist)
-        self.apikey = self.APIkeylist.pop()
-        self.s = requests.Session()
+        myProxy = fetchProxies(1)
+        proxy = urllib2.ProxyHandler({'http': myProxy[0]['http']})
         opener = urllib2.build_opener()
         urllib2.install_opener(opener)
 
+        random.shuffle(self.APIkeylist)
+        self.apikey = self.APIkeylist.pop()
+        self.s = requests.Session()
+        self.s.proxies = myProxy
 
     def entities(self, flavor, data, options={}):
         """

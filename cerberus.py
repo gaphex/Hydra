@@ -35,9 +35,8 @@ class dataHandler():
         try:
             self.stacks[int(pID)].put(tweet)
             print pDesc, ':    ', tweet.text,
-            r = self.oracle.howIsIt(tweet.text)
-            if type(r) is dict:
-                print r
+            r = self.oracle.alchemyRequest(tweet.text, 'sentiment')
+            print r
             print ''
 
         finally:
