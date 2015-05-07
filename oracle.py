@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
+from pyalchemy import alchemyapi
+from loki import DecodeFile
 import requests
-import tweepy
-from meta import *
 import json
 import ast
 import re
-from pyalchemy import alchemyapi
 
 class Oracle():
 
-    def __init__(self):
+    def __init__(self, keychain, key):
+        print 'Invoking Oracle...'
+        DecodeFile(keychain, key)
         self.gmkey = 'AIzaSyCtaVbVYJrHPdbkj_gpxQWktZ-_5sJRyVk'
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
         self.alchemyAPI = alchemyapi.AlchemyAPI()

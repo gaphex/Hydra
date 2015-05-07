@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 from datetime import datetime
-from oracle import Oracle
 import tweepy
 import json
 import sys
@@ -25,7 +24,6 @@ class CustomStreamListener(tweepy.StreamListener):
 
         self.pID = pID
         self.pDesc = pDesc
-        self.oracle = Oracle()
         self.dataHandler = dataHandler
         self.streamHandler = streamHandler
         super(CustomStreamListener, self ).__init__()
@@ -41,10 +39,7 @@ class CustomStreamListener(tweepy.StreamListener):
             timezone = status.author.time_zone
             usr = status.author.screen_name.strip()
             location = status.author.location.strip()
-            if not location:
-                location = self.oracle.findInRaw('country', raw)
-            boundbox = self.oracle.findInRaw('bounding_box', raw)
-            tweet = Tweet(tid, usr, txt, src, cat, timezone, location, geodatum, boundbox)
+            tweet = Tweet(tid, usr, txt, src, cat, timezone, location, geodatum, raw)
 
             self.dataHandler.handleNewTweet(self.pID, self.pDesc, tweet)
 

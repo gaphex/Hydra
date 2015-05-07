@@ -6,11 +6,11 @@ import json
 
 
 class dataHandler():
-    def __init__(self, nP, masterLock, mode):
+    def __init__(self, nP, masterLock, mode, keychain, key):
         self.nP = nP
         self.mode = mode
         self.totalScore = 0
-        self.oracle = Oracle()
+        self.oracle = Oracle(keychain, key)
         self.lock = masterLock
         self.json_db_filename = 'tweetDB.json'
         self.SQL_db_filename = 'tweets.db'
@@ -18,6 +18,7 @@ class dataHandler():
 
     def initResources(self):
         self.stacks = []
+
 
         for i in range(self.nP):
             self.stacks.append(Queue())
@@ -33,6 +34,9 @@ class dataHandler():
     def handleNewTweet(self, pID, pDesc, tweet):
         self.lock.acquire()
         try:
+            if not tweet.location:
+                location = self.oracle.findInRaw('country', tweet.boundBox)
+            tweet.boundBox = self.oracle.findInRaw('bounding_box', tweet.boundBox)
             self.stacks[int(pID)].put(tweet)
             print pDesc, ':    ', tweet.text,
             r = self.oracle.alchemyRequest(tweet.text, 'sentiment')
@@ -44,9 +48,9 @@ class dataHandler():
 
     def printScore(self, score, v):
         print ''
-        print '     -----------------------------------------------------'
+        print '    -----------------------------------------------------'
         print 'Successfully wrote', score, 'entities to', self.db, 'for a total of', v
-        print '     -----------------------------------------------------'
+        print '    -----------------------------------------------------'
         print ''
 
     def readFromJSON(self):

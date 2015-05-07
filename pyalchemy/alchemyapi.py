@@ -1,7 +1,6 @@
 from __future__ import print_function
 from proxycheck import fetchProxies
 from urllib import urlencode
-from meta import alchemyKEY
 import requests
 import urllib2
 import random
@@ -75,10 +74,12 @@ class AlchemyAPI:
     BASE_URL = 'http://access.alchemyapi.com/calls'
 
     def __init__(self):
-        self.APIkeylist = alchemyKEY
+
         self.initResources()
 
     def initResources(self):
+        from keys import alchemyKEY
+        self.APIkeylist = alchemyKEY
         myProxy = fetchProxies(1)
         proxy = urllib2.ProxyHandler({'http': myProxy[0]['http']})
         opener = urllib2.build_opener()

@@ -23,6 +23,7 @@ def checkOut(ip):
 
 
 def fetchProxies(n):
+    print '----------------------------------'
     print 'Fetching proxies...'
     responseList = []
     response = None
@@ -30,7 +31,7 @@ def fetchProxies(n):
     myProxyList = []
     while len(responseList) is not n:
         if not len(myProxyList):
-            myProxyList = proxyList
+            myProxyList = [{'http': v} for v in proxyList]
         else:
             random.shuffle(myProxyList)
             test = myProxyList.pop()

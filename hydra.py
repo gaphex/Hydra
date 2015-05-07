@@ -1,32 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
-
-import time
-from relay import *
-from proxycheck import *
-from oracle import *
 import multiprocessing as mp
-from cerberus import dataHandler
 from multiprocessing import Lock
 from tweety.streaming import Stream
+import tweepy
+import time
+from relay import CustomStreamListener
+from proxycheck import fetchProxies
+from cerberus import dataHandler
+from loki import EncodeFile
+
+
 
 class Hydra():
+
+
     def __init__(self, nP, masterLock, mode):
 
         self.mode = mode
         self.threads = nP
         self.lifespan = 600
         self.processes = []
-        self.version = '1.03'
+        self.version = '1.04'
         self.proxyList = None
+        self.keychain = keychain
+        self.key = key
         self.streaming = False
         self.lock = masterLock
-        self.batchesPerStream = 30
+        self.batchesPerStream = 20
         self.auths = self.initAPIKeys(nP)
 
     def run(self):
         print 'Running Hydra', self.version, 'in', self.mode, 'mode'
+
         self.main()
 
     def main(self):
@@ -57,9 +64,7 @@ class Hydra():
                 print e, 'exception caught while listening to streams'
             finally:
                 dataHandler.reboot()
-                print ''
-                print 'Reconnecting...'
-                print ''
+                EncodeFile(self.keychain, self.key)
 
 
     def initiateStreaming(self):
@@ -95,6 +100,7 @@ class Hydra():
             dataHandler.executeBatch()
 
     def initAPIKeys(self, nP):
+        from keys import CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
         auths = []
 
         for i in range(nP):
@@ -115,24 +121,25 @@ class Hydra():
 if __name__ == "__main__":
 
     masterLock = Lock()
-    mode = 'geo'
+    mode = 'morph'
     db = 'SQL'
-    nP = 1
+    key = raw_input('Enter Password: ')
+    keychain = 'keys.py'
+    nP = 4
 
     while True:
         try:
-            dataHandler = dataHandler(nP, masterLock, db)
+            dataHandler = dataHandler(nP, masterLock, db, keychain, key)
             hydra = Hydra(nP, masterLock, mode)
             hydra.run()
 
+        except KeyboardInterrupt:
+            print '--------------Shutting Down----------------'
+            break
+
         except Exception as e:
-            if str(e) == 'Cannot operate on a closed database.':
-                print ''
-                print '--------------Shutting Down----------------'
-                break
-            else:
-                print e, 'exception caught while running Hydra, reloading...'
-                time.sleep(3)
+            print e, 'exception caught while running Hydra, reloading...'
+            time.sleep(3)
 
 
 
