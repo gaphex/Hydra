@@ -395,129 +395,152 @@ import os
 import urllib2
 from meta import *
 import random
+from sys import stdout
 
-def checkOut(ip):
-    try:
-        proxy_handler = urllib2.ProxyHandler({'http': ip['http']})
-        opener = urllib2.build_opener(proxy_handler)
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        urllib2.install_opener(opener)
-        req=urllib2.Request('http://www.icanhazip.com')
-        urllib2.urlopen(req, timeout=3)
-        print ip['http'], 'passed'
-        print ''
-        return ip
+class Loki():
 
-    except Exception as e:
-        print ip['http'], 'failed:', e
-        print ''
-        return None
+    def __init__(self):
+        print 'Invoking Loki...'
 
-def fetchProxies(n):
-    print '----------------------------------'
-    print 'Fetching proxies...'
-    responseList = []
-    response = None
-    test = None
-    myProxyList = []
-    while len(responseList) != n:
-        if not len(myProxyList):
-            myProxyList = [{'http': v} for v in proxyList]
-        else:
-            random.shuffle(myProxyList)
-            test = myProxyList.pop()
-        if test:
-            if checkOut(test):
-                response = test
+        while True:
+            pwd = raw_input('Enter Password: ')
+            if len(pwd) > 7:
+                self.key = pwd
+                break
             else:
-                response = None
-        if response:
-            if response not in responseList:
-                responseList.append(response)
+                print 'ACCESS DENIED'
+
+        self.delimiter = 'XMD5A'
+
+    def encryptFile(self, input_f):
+        try:
+            key = self.key
+            delimiter = self.delimiter
+            size=int(self.GetSize(input_f))
+            crypt_f=input_f+'.crypt'
+            cipher = Blowfish(key)
+            print ''
+            print '----------------------------------'
+            print 'Encrypting', input_f, '...'
+            with open(input_f,'rb') as f1:
+                with open(crypt_f,'wb') as f2:
+                    for i in range(size):
+                        self.progress(i, size)
+                        t= f1.read(1)
+                        u = cipher.encrypt(str(base64.b64encode(t)*2))+delimiter
+                        f2.write(u)
+
+            f1.close()
+            f2.close()
+            self.cleanUp(input_f)
+
+        except Exception as e:
+            print 'exception', e
+
+        finally:
+            print 'Success'
+            print '----------------------------------'
+            print ''
+
+    def retryDecrypting(self, output_f):
+        print ''
+        self.key = raw_input('Enter Password: ')
+        self.decryptFile(output_f)
+
+    def decryptFile(self, crypt_f):
+        key = self.key
+        delimiter = self.delimiter
+
+        try:
+            cipher = Blowfish(key)
+            output_f = crypt_f
+            crypt_f = crypt_f + '.crypt'
+            print '----------------------------------'
+            print 'Decrypting', crypt_f, '...'
+            with open(crypt_f,'rb') as f1:
+                with open(output_f,'wb') as f2:
+                    lencr=f1.read().split(delimiter)
+                    tot = len(lencr)-1
+                    for i in range(tot):
+                        self.progress(i, tot)
+                        f2.write((base64.b64decode(cipher.decrypt(lencr[i])[4:])))
+            f1.close()
+            f2.close()
+            print 'Success'
+            print '----------------------------------'
+
+        except Exception as e:
+            print e, 'exception caught while running Loki'
+            if str(e) == "[Errno 2] No such file or directory: 'keys.py.crypt'":
+                print 'Encrypting keychain with new key...',
+            if str(e) == 'Incorrect padding':
+                print 'ACCESS DENIED'
+                self.retryDecrypting(output_f)
+
+    def checkOut(self, ip):
+        try:
+            proxy_handler = urllib2.ProxyHandler({'http': ip['http']})
+            opener = urllib2.build_opener(proxy_handler)
+            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+            urllib2.install_opener(opener)
+            req=urllib2.Request('http://www.icanhazip.com')
+            urllib2.urlopen(req, timeout=3)
+            print ip['http'], 'passed'
+            print ''
+            return ip
+
+        except Exception as e:
+            print ip['http'], 'failed:', e
+            print ''
+            return None
+
+    def fetchProxies(self, n):
+        print '----------------------------------'
+        print 'Fetching proxies...'
+        responseList = []
+        response = None
+        test = None
+        myProxyList = []
+        while len(responseList) != n:
+            if not len(myProxyList):
+                myProxyList = [{'http': v} for v in proxyList]
             else:
-                print 'found dupe proxy:', response
-    return responseList
+                random.shuffle(myProxyList)
+                test = myProxyList.pop()
+            if test:
+                if self.checkOut(test):
+                    response = test
+                else:
+                    response = None
+            if response:
+                if response not in responseList:
+                    responseList.append(response)
+                else:
+                    print 'found dupe proxy:', response
+        return responseList
 
-def GetSize(input):
-    f=open(input,'rb')
-    f.seek(0,2) # move the cursor to the end of the file
-    size = f.tell()
-    f.close()
-    return size
+    def progress(self, i, n):
+        stdout.write("\r%f%%" % (i*100/float(n)))
+        stdout.flush()
+        if i == n-1:
+            stdout.write("\r100%")
+            print('')
 
-def cleanUp(input_f):
-    try:
-        os.remove(input_f)
-        os.remove('keys.pyc')
-        os.remove('loki.pyc')
-        os.remove('meta.pyc')
-        os.remove('relay.pyc')
-        os.remove('oracle.pyc')
-        os.remove('cerberus.pyc')
-    except Exception as e:
-        print e
+    def GetSize(self, input):
+        f=open(input,'rb')
+        f.seek(0,2) # move the cursor to the end of the file
+        size = f.tell()
+        f.close()
+        return size
 
-def EncryptFile(input_f,key):
-    try:
-        delimiter = 'XMD5A'
-        size=int(GetSize(input_f))
-        crypt_f=input_f+'.crypt'
-        cipher = Blowfish(key)
-        print ' --------------------------'
-        print 'Encrypting', input_f, '...',
-        with open(input_f,'rb') as f1:
-            with open(crypt_f,'wb') as f2:
-                for i in range(size):
-                    t= f1.read(1)
-                    u = cipher.encrypt(str(base64.b64encode(t)*2))+delimiter
-                    f2.write(u)
-
-        f1.close()
-        f2.close()
-        cleanUp(input_f)
-
-    except Exception as e:
-        print 'exception', e
-
-    finally:
-        print ' Done'
-        print ' --------------------------'
-        print ''
-
-def retryDecoding(output_f):
-    print ''
-    print 'Access Denied'
-    pw = raw_input('Enter Password: ')
-    DecryptFile(output_f, pw)
-
-
-def DecryptFile(crypt_f,key):
-    delimiter = 'XMD5A'
-
-    while len(key)<8:
-        print 'Password is incorrect'
-        key = raw_input('Enter Password: ')
-
-    try:
-        cipher = Blowfish(key)
-        output_f = crypt_f
-        crypt_f = crypt_f + '.crypt'
-        print '---------------------------------'
-        print 'Decrypting', crypt_f, '...',
-        with open(crypt_f,'rb') as f1:
-            with open(output_f,'wb') as f2:
-                lencr=f1.read().split(delimiter)
-                for i in range(len(lencr)-1):
-                    f2.write((base64.b64decode(cipher.decrypt(lencr[i])[4:])))
-        f1.close()
-        f2.close()
-
-    except Exception as e:
-        print e
-        if str(e) == 'Incorrect padding':
-            retryDecoding(output_f)
-
-    finally:
-        print 'Done'
-        print '---------------------------------'
-        print ''
+    def cleanUp(self, input_f):
+        try:
+            os.remove(input_f)
+            os.remove('keys.pyc')
+            os.remove('loki.pyc')
+            os.remove('meta.pyc')
+            os.remove('relay.pyc')
+            os.remove('oracle.pyc')
+            os.remove('cerberus.pyc')
+        except Exception as e:
+            print e

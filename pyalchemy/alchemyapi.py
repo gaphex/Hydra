@@ -1,5 +1,4 @@
 from __future__ import print_function
-from loki import fetchProxies
 from urllib import urlencode
 import requests
 import urllib2
@@ -73,14 +72,14 @@ class AlchemyAPI:
     ENDPOINTS['taxonomy']['text'] = '/text/TextGetRankedTaxonomy'
     BASE_URL = 'http://access.alchemyapi.com/calls'
 
-    def __init__(self):
-
-        self.initResources()
-
-    def initResources(self):
+    def __init__(self, Loki):
         from keys import alchemyKEY
         self.APIkeylist = alchemyKEY
-        myProxy = fetchProxies(1)
+        self.initResources(Loki)
+
+    def initResources(self, Loki):
+        self.Loki = Loki
+        myProxy = self.Loki.fetchProxies(1)
         proxy = urllib2.ProxyHandler({'http': myProxy[0]['http']})
         opener = urllib2.build_opener()
         urllib2.install_opener(opener)

@@ -1,30 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
+
+import time
+import tweepy
 import multiprocessing as mp
 from multiprocessing import Lock
-from tweety.streaming import Stream
-import tweepy
-import time
-from cerberus import dataHandler
-from relay import CustomStreamListener
-from loki import EncryptFile, fetchProxies
-
-
 
 class Hydra():
-
 
     def __init__(self, nP, masterLock, mode):
 
         self.mode = mode
         self.threads = nP
+        self.Loki = Loki
         self.lifespan = 600
         self.processes = []
         self.version = '1.04'
         self.proxyList = None
         self.keychain = keychain
-        self.key = key
         self.streaming = False
         self.lock = masterLock
         self.batchesPerStream = 20
@@ -32,7 +26,6 @@ class Hydra():
 
     def run(self):
         print 'Running Hydra', self.version, 'in', self.mode, 'mode'
-
         self.main()
 
     def main(self):
@@ -46,13 +39,13 @@ class Hydra():
                     self.meta = metadata
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'], self.proxyList[x],
-                                                                          dataHandler, self)) for x in range(self.threads)]
+                                                                          Cerberus, self)) for x in range(self.threads)]
                 if self.mode == 'geo':
                     from meta import geodata
                     self.meta = geodata
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'], self.proxyList[x],
-                                                                          dataHandler, self)) for x in range(self.threads)]
+                                                                          Cerberus, self)) for x in range(self.threads)]
 
                 #self.printMapping()
                 self.initiateStreaming()
@@ -62,8 +55,10 @@ class Hydra():
             except Exception as e:
                 print e, 'exception caught while listening to streams'
             finally:
-                dataHandler.reboot()
-                EncryptFile(self.keychain, self.key)
+                self.Loki.encryptFile(self.keychain)
+                #self.Loki.encryptFile('tweets.db')
+                Cerberus.reboot()
+
 
 
     def initiateStreaming(self):
@@ -88,7 +83,7 @@ class Hydra():
 
     def refreshProxies(self):
         self.lock.acquire()
-        self.proxyList = fetchProxies(self.threads)
+        self.proxyList = self.Loki.fetchProxies(self.threads)
         self.lock.release()
 
     def process(self):
@@ -96,7 +91,7 @@ class Hydra():
 
         for i in range (self.batchesPerStream):
             time.sleep(batchspan)
-            dataHandler.executeBatch()
+            Cerberus.executeBatch()
 
     def initAPIKeys(self, nP):
         from keys import CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
@@ -119,27 +114,43 @@ class Hydra():
 
 if __name__ == "__main__":
 
-    masterLock = Lock()
-    mode = 'morph'
-    db = 'SQL'
-    key = raw_input('Enter Password: ')
-    keychain = 'keys.py'
-    nP = 1
-
     while True:
         try:
-            dataHandler = dataHandler(nP, masterLock, db, keychain, key)
+            from tweety.streaming import Stream
+            from cerberus import Cerberus
+            from relay import CustomStreamListener
+            from loki import Loki
+
+            keychain = 'keys.py'
+            masterLock = Lock()
+            mode = 'morph'
+            db = 'SQL'
+            nP = 1
+
+            Loki = Loki()
+            Cerberus = Cerberus(nP, masterLock, db, keychain, Loki)
             hydra = Hydra(nP, masterLock, mode)
+
             hydra.run()
 
         except KeyboardInterrupt:
+            #t = raw_input()
+            t = 0
             hydra.terminateStreaming()
-            print '--------------Shutting Down----------------'
-            break
+            if t == 0:
+                print ''
+                print '--------------Shutting Down----------------'
+                break
+            elif t == 1:
+                print ''
+                print '--------------Reconnecting-----------------'
+                pass
 
         except Exception as e:
-            print e, 'exception caught while running Hydra, reloading...'
+            print e, 'exception caught while running Hydra'
             time.sleep(3)
+
+
 
 
 

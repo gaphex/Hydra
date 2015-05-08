@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 from pyalchemy import alchemyapi
-from loki import DecryptFile
 import requests
 import json
 import ast
@@ -10,13 +9,21 @@ import re
 
 class Oracle():
 
-    def __init__(self, keychain, key):
+    def __init__(self, keychain, Loki):
         print 'Invoking Oracle...'
-        DecryptFile(keychain, key)
-        self.gmkey = 'AIzaSyCtaVbVYJrHPdbkj_gpxQWktZ-_5sJRyVk'
+
+        self.Loki = Loki
+        self.Loki.decryptFile(keychain)
+        #self.Loki.decryptFile('tweets.db')
+        self.initResources()
+
+    def initResources(self):
+
+        from keys import GM_KEY
+        self.gmkey = GM_KEY
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
-        self.alchemyAPI = alchemyapi.AlchemyAPI()
         self.emo_db = json.load(open('pyalchemy/emoji_database','r'))
+        self.alchemyAPI = alchemyapi.AlchemyAPI(self.Loki)
         self.terminate = 0
         self.count = 0
 

@@ -4,21 +4,19 @@ from oracle import Oracle
 import _sqlite3
 import json
 
-
-class dataHandler():
-    def __init__(self, nP, masterLock, mode, keychain, key):
+class Cerberus():
+    def __init__(self, nP, masterLock, mode, keychain, Loki):
         self.nP = nP
         self.mode = mode
         self.totalScore = 0
-        self.oracle = Oracle(keychain, key)
         self.lock = masterLock
+        self.oracle = Oracle(keychain, Loki)
         self.json_db_filename = 'tweetDB.json'
         self.SQL_db_filename = 'tweets.db'
         self.initResources()
 
     def initResources(self):
         self.stacks = []
-
 
         for i in range(self.nP):
             self.stacks.append(Queue())
