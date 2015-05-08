@@ -1,4 +1,5 @@
 __author__ = 'denisantyukhov'
+
 class Blowfish:
 
         # Cipher directions
@@ -391,6 +392,51 @@ class Blowfish:
 
 import base64
 import os
+import urllib2
+from meta import *
+import random
+
+def checkOut(ip):
+    try:
+        proxy_handler = urllib2.ProxyHandler({'http': ip['http']})
+        opener = urllib2.build_opener(proxy_handler)
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        urllib2.install_opener(opener)
+        req=urllib2.Request('http://www.icanhazip.com')
+        urllib2.urlopen(req, timeout=3)
+        print ip['http'], 'passed'
+        print ''
+        return ip
+
+    except Exception as e:
+        print ip['http'], 'failed:', e
+        print ''
+        return None
+
+def fetchProxies(n):
+    print '----------------------------------'
+    print 'Fetching proxies...'
+    responseList = []
+    response = None
+    test = None
+    myProxyList = []
+    while len(responseList) != n:
+        if not len(myProxyList):
+            myProxyList = [{'http': v} for v in proxyList]
+        else:
+            random.shuffle(myProxyList)
+            test = myProxyList.pop()
+        if test:
+            if checkOut(test):
+                response = test
+            else:
+                response = None
+        if response:
+            if response not in responseList:
+                responseList.append(response)
+            else:
+                print 'found dupe proxy:', response
+    return responseList
 
 def GetSize(input):
     f=open(input,'rb')
@@ -400,16 +446,18 @@ def GetSize(input):
     return size
 
 def cleanUp(input_f):
-    os.remove(input_f)
-    os.remove('keys.pyc')
-    os.remove('loki.pyc')
-    os.remove('meta.pyc')
-    os.remove('relay.pyc')
-    os.remove('oracle.pyc')
-    os.remove('cerberus.pyc')
-    os.remove('proxycheck.pyc')
+    try:
+        os.remove(input_f)
+        os.remove('keys.pyc')
+        os.remove('loki.pyc')
+        os.remove('meta.pyc')
+        os.remove('relay.pyc')
+        os.remove('oracle.pyc')
+        os.remove('cerberus.pyc')
+    except Exception as e:
+        print e
 
-def EncodeFile(input_f,key):
+def EncryptFile(input_f,key):
     try:
         delimiter = 'XMD5A'
         size=int(GetSize(input_f))
@@ -436,9 +484,20 @@ def EncodeFile(input_f,key):
         print ' --------------------------'
         print ''
 
+def retryDecoding(output_f):
+    print ''
+    print 'Access Denied'
+    pw = raw_input('Enter Password: ')
+    DecryptFile(output_f, pw)
 
-def DecodeFile(crypt_f,key):
+
+def DecryptFile(crypt_f,key):
     delimiter = 'XMD5A'
+
+    while len(key)<8:
+        print 'Password is incorrect'
+        key = raw_input('Enter Password: ')
+
     try:
         cipher = Blowfish(key)
         output_f = crypt_f
@@ -456,10 +515,7 @@ def DecodeFile(crypt_f,key):
     except Exception as e:
         print e
         if str(e) == 'Incorrect padding':
-            print ''
-            print 'Password is incorrect'
-            pw = raw_input('Enter Password: ')
-            DecodeFile(output_f, pw)
+            retryDecoding(output_f)
 
     finally:
         print 'Done'

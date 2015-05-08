@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 from pyalchemy import alchemyapi
-from loki import DecodeFile
+from loki import DecryptFile
 import requests
 import json
 import ast
@@ -12,7 +12,7 @@ class Oracle():
 
     def __init__(self, keychain, key):
         print 'Invoking Oracle...'
-        DecodeFile(keychain, key)
+        DecryptFile(keychain, key)
         self.gmkey = 'AIzaSyCtaVbVYJrHPdbkj_gpxQWktZ-_5sJRyVk'
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
         self.alchemyAPI = alchemyapi.AlchemyAPI()

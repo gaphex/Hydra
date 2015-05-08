@@ -1,5 +1,5 @@
 from __future__ import print_function
-from proxycheck import fetchProxies
+from loki import fetchProxies
 from urllib import urlencode
 import requests
 import urllib2

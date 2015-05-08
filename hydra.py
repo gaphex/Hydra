@@ -6,10 +6,9 @@ from multiprocessing import Lock
 from tweety.streaming import Stream
 import tweepy
 import time
-from relay import CustomStreamListener
-from proxycheck import fetchProxies
 from cerberus import dataHandler
-from loki import EncodeFile
+from relay import CustomStreamListener
+from loki import EncryptFile, fetchProxies
 
 
 
@@ -64,7 +63,7 @@ class Hydra():
                 print e, 'exception caught while listening to streams'
             finally:
                 dataHandler.reboot()
-                EncodeFile(self.keychain, self.key)
+                EncryptFile(self.keychain, self.key)
 
 
     def initiateStreaming(self):
