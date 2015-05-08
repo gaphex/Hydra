@@ -92,9 +92,9 @@ class Oracle():
             if response['statusInfo'] in badStatus:
                 self.terminate += 1
                 print 'Alchemy bad status,', 3 - self.terminate, 'attempts until reload'
-                if self.terminate == 3:
+                if self.terminate == 1:
                     self.terminate = 0
-                    self.alchemyAPI.initResources()
+                    self.alchemyAPI.initResources(self.Loki)
 
         except Exception as e:
             pass

@@ -38,13 +38,13 @@ class Hydra():
                     from meta import metadata
                     self.meta = metadata
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
-                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'], self.proxyList[x],
+                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           Cerberus, self)) for x in range(self.threads)]
                 if self.mode == 'geo':
                     from meta import geodata
                     self.meta = geodata
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
-                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'], self.proxyList[x],
+                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           Cerberus, self)) for x in range(self.threads)]
 
                 #self.printMapping()
@@ -125,7 +125,7 @@ if __name__ == "__main__":
             masterLock = Lock()
             mode = 'morph'
             db = 'SQL'
-            nP = 1
+            nP = 3
 
             Loki = Loki()
             Cerberus = Cerberus(nP, masterLock, db, keychain, Loki)

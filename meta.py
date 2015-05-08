@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-metadata = [{'pID': 0, 'pDesc': 'GTA     ', 'track': ['GTA']},
-            {'pID': 1, 'pDesc': 'Avengers', 'track': ['Avengers']},
-            {'pID': 2, 'pDesc': 'YOTA    ', 'track': ['YOTASPACE']},
+metadata = [{'pID': 0, 'pDesc': 'Победа  ', 'track': [u'Победа']},
+            {'pID': 1, 'pDesc': 'StarWars', 'track': ['StarWars']},
+            {'pID': 2, 'pDesc': 'Witcher ', 'track': ['Witcher']},
             {'pID': 3, 'pDesc': 'StarWars', 'track': ['Star Wars']},
             {'pID': 4, 'pDesc': 'ISIS    ', 'track': ['ISIS']}]
 

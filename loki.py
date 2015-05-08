@@ -402,15 +402,20 @@ class Loki():
     def __init__(self):
         print 'Invoking Loki...'
 
+        if 'self.key' not in locals():
+            self.authorise()
+
+        self.delimiter = 'XMD5A'
+
+    def authorise(self):
         while True:
             pwd = raw_input('Enter Password: ')
             if len(pwd) > 7:
                 self.key = pwd
                 break
             else:
+                print ''
                 print 'ACCESS DENIED'
-
-        self.delimiter = 'XMD5A'
 
     def encryptFile(self, input_f):
         try:
@@ -443,8 +448,7 @@ class Loki():
             print ''
 
     def retryDecrypting(self, output_f):
-        print ''
-        self.key = raw_input('Enter Password: ')
+        self.authorise()
         self.decryptFile(output_f)
 
     def decryptFile(self, crypt_f):
@@ -470,12 +474,14 @@ class Loki():
             print '----------------------------------'
 
         except Exception as e:
-            print e, 'exception caught while running Loki'
+
             if str(e) == "[Errno 2] No such file or directory: 'keys.py.crypt'":
                 print 'Encrypting keychain with new key...',
-            if str(e) == 'Incorrect padding':
+            elif str(e) == 'Incorrect padding':
                 print 'ACCESS DENIED'
                 self.retryDecrypting(output_f)
+            else:
+                print e, 'exception caught while decrypting', crypt_f
 
     def checkOut(self, ip):
         try:
@@ -534,6 +540,7 @@ class Loki():
         return size
 
     def cleanUp(self, input_f):
+        print 'Cleaning up...'
         try:
             os.remove(input_f)
             os.remove('keys.pyc')
