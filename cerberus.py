@@ -25,20 +25,31 @@ class Cerberus():
             self.db = self.SQL_db_filename
             self.conn = _sqlite3.connect(self.SQL_db_filename)
             self.curs = self.conn.cursor()
-            #self.curs.execute("CREATE TABLE tweets (tid integer, username text, cat text, content text, coordinates text, source text)")
+            #self.curs.execute("CREATE TABLE tweets (tid integer, username text, cat text, content text, coordinates text, sentiment text, source text)")
         else:
             self.db = self.json_db_filename
 
     def handleNewTweet(self, pID, pDesc, tweet):
         self.lock.acquire()
         try:
+            self.stacks[int(pID)].put(tweet)
+
             if not tweet.location:
                 location = self.oracle.findInRaw('country', tweet.boundBox)
+
             tweet.boundBox = self.oracle.findInRaw('bounding_box', tweet.boundBox)
-            self.stacks[int(pID)].put(tweet)
+
             print pDesc, ':    ', tweet.text,
             r = self.oracle.alchemyRequest(tweet.text, 'sentiment')
-            print r
+
+            if 'score' in r:
+                tweet.sentiment = r['score']
+            elif 'type' in r:
+                tweet.sentiment = r['type']
+            else:
+                tweet.sentiment = u'None'
+
+            print tweet.sentiment
             print ''
 
         finally:
@@ -83,7 +94,7 @@ class Cerberus():
 
                     for tweet in buffer:
                         json_data.append({'user': tweet.userID, 'tweet': tweet.tweetID, 'text': tweet.text,
-                                          'created_at': str(tweet.createdAt), 'location': tweet.location})
+                                          'created_at': str(tweet.createdAt), 'location': tweet.location, 'source': tweet.device})
 
                     self.writeToJSON(json_data)
                     score = len(buffer)
@@ -93,8 +104,8 @@ class Cerberus():
                 if self.mode == 'SQL':
 
                     for tweet in buffer:
-                        self.curs.execute("insert into tweets (tid, username, content, cat, coordinates, source) values(?, ?, ?, ?, ?, ?)",
-                                          (tweet.tweetID, tweet.userID, tweet.text, str(tweet.createdAt), tweet.location, tweet.device))
+                        self.curs.execute("insert into tweets (tid, username, content, cat, coordinates, sentiment, source) values(?, ?, ?, ?, ?, ?, ?)",
+                                          (tweet.tweetID, tweet.userID, tweet.text, str(tweet.createdAt), tweet.location, tweet.sentiment, tweet.device))
                         self.conn.commit()
 
                     score = len(buffer)

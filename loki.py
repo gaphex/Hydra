@@ -414,7 +414,6 @@ class Loki():
                 self.key = pwd
                 break
             else:
-                print ''
                 print 'ACCESS DENIED'
 
     def encryptFile(self, input_f):
@@ -526,7 +525,7 @@ class Loki():
         return responseList
 
     def progress(self, i, n):
-        stdout.write("\r%f%%" % (i*100/float(n)))
+        stdout.write("\r%f%%   " % (i*100/float(n)))
         stdout.flush()
         if i == n-1:
             stdout.write("\r100%")

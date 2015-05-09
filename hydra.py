@@ -18,9 +18,10 @@ class Hydra():
         self.processes = []
         self.version = '1.04'
         self.proxyList = None
-        self.keychain = keychain
         self.streaming = False
+        self.processed = False
         self.lock = masterLock
+        self.keychain = keychain
         self.batchesPerStream = 20
         self.auths = self.initAPIKeys(nP)
 
@@ -33,6 +34,8 @@ class Hydra():
             try:
                 if not self.proxyList:
                     self.refreshProxies()
+
+                print 'Logging on...'
 
                 if self.mode == 'morph':
                     from meta import metadata
@@ -55,14 +58,17 @@ class Hydra():
             except Exception as e:
                 print e, 'exception caught while listening to streams'
             finally:
-                self.Loki.encryptFile(self.keychain)
-                #self.Loki.encryptFile('tweets.db')
+                if not self.processed:
+                    self.Loki.encryptFile(self.keychain)
+                    #self.Loki.encryptFile('tweets.db')
                 Cerberus.reboot()
 
 
 
     def initiateStreaming(self):
-        print 'Listening to', self.threads, 'data streams...'
+        print ''
+        print '---------------Connecting to', self.threads, 'data streams---------------'
+        print ''
         if self.streaming is False:
             for p in self.processes:
                 p.start()
@@ -89,9 +95,11 @@ class Hydra():
     def process(self):
         batchspan = int(self.lifespan/self.batchesPerStream)
 
+        self.processed = False
         for i in range (self.batchesPerStream):
             time.sleep(batchspan)
             Cerberus.executeBatch()
+        self.processed = True
 
     def initAPIKeys(self, nP):
         from keys import CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET
@@ -125,7 +133,7 @@ if __name__ == "__main__":
             masterLock = Lock()
             mode = 'morph'
             db = 'SQL'
-            nP = 3
+            nP = 2
 
             Loki = Loki()
             Cerberus = Cerberus(nP, masterLock, db, keychain, Loki)

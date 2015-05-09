@@ -17,6 +17,7 @@ class Tweet():
         self.geodata = geodatum
         self.location = location
         self.timezone = timezone
+        self.sentiment = ''
 
 class CustomStreamListener(tweepy.StreamListener):
 

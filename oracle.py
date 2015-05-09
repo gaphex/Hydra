@@ -24,7 +24,6 @@ class Oracle():
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
         self.emo_db = json.load(open('pyalchemy/emoji_database','r'))
         self.alchemyAPI = alchemyapi.AlchemyAPI(self.Loki)
-        self.terminate = 0
         self.count = 0
 
     def requestCoordinates(self, location):
@@ -90,11 +89,8 @@ class Oracle():
                 result = 'ERROR: '+ response['statusInfo']
 
             if response['statusInfo'] in badStatus:
-                self.terminate += 1
-                print 'Alchemy bad status,', 3 - self.terminate, 'attempts until reload'
-                if self.terminate == 1:
-                    self.terminate = 0
-                    self.alchemyAPI.initResources(self.Loki)
+                print 'Alchemy bad status, reloading'
+                self.alchemyAPI.initResources(self.Loki)
 
         except Exception as e:
             pass
