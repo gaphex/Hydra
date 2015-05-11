@@ -167,7 +167,11 @@ class ReadBuffer(object):
                 return self._pop(loc + len(sep))
             else:
                 start = len(self._buffer)
-            self._buffer += self._stream.read(self._chunk_size).decode("ascii")
+
+            try:
+                self._buffer += self._stream.read(self._chunk_size).decode("ascii")
+            except Exception as e:
+                print ('Connection issues', e)
 
     def _pop(self, length):
         r = self._buffer[:length]

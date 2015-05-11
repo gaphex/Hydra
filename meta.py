@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 metadata = [{'pID': 0, 'pDesc': 'Победа  ', 'track': [u'Победа']},
-            {'pID': 1, 'pDesc': 'Парад   ', 'track': [u'Парад']},
+            {'pID': 1, 'pDesc': 'Выходной', 'track': [u'Выходной']},
             {'pID': 2, 'pDesc': 'Witcher ', 'track': ['Witcher']},
             {'pID': 3, 'pDesc': 'StarWars', 'track': ['Star Wars']},
             {'pID': 4, 'pDesc': 'ISIS    ', 'track': ['ISIS']}]
