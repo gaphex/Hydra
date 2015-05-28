@@ -56,3 +56,5 @@ crashlytics-build.properties
 *.json
 
 *.pyc
+
+tweetsSpring.db
