@@ -90,7 +90,7 @@ class Cerberus():
                     try:
                         json_data, u = self.readFromJSON()
                     except Exception as e:
-                        print e
+                        print e, 'exception caught while writing to JSON'
 
                     for tweet in buffer:
                         json_data.append({'user': tweet.userID, 'tweet': tweet.tweetID, 'text': tweet.text,

@@ -439,7 +439,7 @@ class Loki():
             self.cleanUp(input_f)
 
         except Exception as e:
-            print 'exception', e
+            print e, 'exception caught while encrypting', input_f
 
         finally:
             print 'Success'
@@ -549,4 +549,4 @@ class Loki():
             os.remove('oracle.pyc')
             os.remove('cerberus.pyc')
         except Exception as e:
-            print e
+            print e, 'exception caught while cleaning up'

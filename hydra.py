@@ -12,8 +12,8 @@ class Hydra():
     def __init__(self, nP, masterLock, mode):
 
         self.mode = mode
-        self.threads = nP
         self.Loki = Loki
+        self.threads = nP
         self.lifespan = 600
         self.processes = []
         self.version = '1.04'
@@ -98,6 +98,7 @@ class Hydra():
         self.processed = False
         for i in range (self.batchesPerStream):
             time.sleep(batchspan)
+            print i, 'out of', self.batchesPerStream, 'batches processed'
             Cerberus.executeBatch()
         self.processed = True
 
@@ -131,9 +132,9 @@ if __name__ == "__main__":
 
             keychain = 'keys.py'
             masterLock = Lock()
-            mode = 'morph'
+            mode = 'geo'
             db = 'SQL'
-            nP = 2
+            nP = 1
 
             Loki = Loki()
             Cerberus = Cerberus(nP, masterLock, db, keychain, Loki)
