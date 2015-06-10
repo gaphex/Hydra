@@ -207,15 +207,15 @@ class Hyperion():
 
         for v in range(3):
             for i in stats:
-                r1l = i[5]-2*i[3]
-                r1r = i[5]+2*i[3]
-                r1b = i[6]-2*i[4]
-                r1t = i[6]+2*i[4]
+                r1l = i[5]-1.2*i[3]
+                r1r = i[5]+1.2*i[3]
+                r1b = i[6]-1.2*i[4]
+                r1t = i[6]+1.2*i[4]
                 for j in stats:
-                    r2l = j[5]-2*j[3]
-                    r2r = j[5]+2*j[3]
-                    r2b = j[6]-2*j[4]
-                    r2t = j[6]+2*j[4]
+                    r2l = j[5]-1.2*j[3]
+                    r2r = j[5]+1.2*j[3]
+                    r2b = j[6]-1.2*j[4]
+                    r2t = j[6]+1.2*j[4]
                     if self.overlap(r1l, r1r, r1t, r1b, r2l, r2r, r2t, r2b) and i!=j:
                         if i[1] >= j[1]:
                             try:
