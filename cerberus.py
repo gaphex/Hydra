@@ -4,6 +4,7 @@ from oracle import Oracle
 import _sqlite3
 import json
 
+
 class Cerberus():
     def __init__(self, nP, masterLock, mode, keychain, Loki):
         self.nP = nP
@@ -31,6 +32,7 @@ class Cerberus():
 
     def handleNewTweet(self, pID, pDesc, tweet):
         self.lock.acquire()
+
         try:
             self.stacks[int(pID)].put(tweet)
 
