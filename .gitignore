@@ -58,3 +58,7 @@ crashlytics-build.properties
 *.pyc
 
 tweetsSpring.db
+
+hyperion.py
+
+Event_mining.ipynb
