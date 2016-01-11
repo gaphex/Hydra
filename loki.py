@@ -1,4 +1,5 @@
 __author__ = 'denisantyukhov'
+from copy import deepcopy
 
 class Blowfish:
 
@@ -502,13 +503,15 @@ class Loki():
     def fetchProxies(self, n):
         print '----------------------------------'
         print 'Fetching proxies...'
+        from meta import proxyList
+        proxList = deepcopy(proxyList)
         responseList = []
         response = None
         test = None
         myProxyList = []
         while len(responseList) != n:
             if not len(myProxyList):
-                myProxyList = [{'http': v} for v in proxyList]
+                myProxyList = [{'http': v} for v in proxList]
             else:
                 random.shuffle(myProxyList)
                 test = myProxyList.pop()
@@ -525,11 +528,11 @@ class Loki():
         return responseList
 
     def progress(self, i, n):
-        stdout.write("\r%f%%   " % (i*100/float(n)))
+        stdout.write("\r%s%%" % "{:5.2f}".format(100*i/float(n)))
         stdout.flush()
         if i == n-1:
-            stdout.write("\r100%")
-            print('')
+            stdout.write("\r100.00%")
+            print("\r\n")
 
     def GetSize(self, input):
         f=open(input,'rb')

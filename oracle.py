@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 from pyalchemy import alchemyapi
-from dugis import api
 import requests
 import json
 import ast
@@ -15,12 +14,7 @@ class Oracle():
 
         self.Loki = Loki
         self.Loki.decryptFile(keychain)
-        self.dgclient = api.API('ruvzyv0753')
-        print self.dgclient
-        try:
-            print self.dgclient.city_list
-        except Exception as e:
-            print 'dgis error', e
+
         #self.Loki.decryptFile('tweets.db')
         self.initResources()
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-__author__ = 'nikitapestrov'
+__author__ = 'denisantyukhov'
 import json
 import re
 import pymorphy2

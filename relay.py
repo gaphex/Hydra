@@ -4,17 +4,18 @@ __author__ = 'denisantyukhov'
 from datetime import datetime
 import tweepy
 import json
+import meta
 import sys
 
 class Tweet():
-    def __init__(self, tID, uID, txt, src, cat, timezone, location, geodatum, boundbox):
+    def __init__(self, json, tID = None, uID = None, txt = None, src = None, cat = None, timezone = None, location = None, geodata = None):
         self.text = txt
         self.device = src
         self.userID = uID
         self.tweetID = tID
+        self.json = json
         self.createdAt = cat
-        self.boundBox = boundbox
-        self.geodata = geodatum
+        self.geodata = geodata
         self.location = location
         self.timezone = timezone
         self.sentiment = ''
@@ -31,22 +32,20 @@ class CustomStreamListener(tweepy.StreamListener):
 
     def on_status(self, status):
         try:
-            raw = str(status)
+            '''
             tid = status.id_str
             cat = status.created_at
-            txt = status.text.strip()
-            src = status.source.strip()
-            geodatum = status.coordinates
-            timezone = status.author.time_zone
-            usr = status.author.screen_name.strip()
-            location = status.author.location.strip()
-            tweet = Tweet(tid, usr, txt, src, cat, timezone, location, geodatum, raw)
-
+            txt = status.text
+            src = status.source
+            geodata = status.coordinates
+            usr = status.author.screen_name
+            location = status.author.location
+            timezone = status.author.time_zone'''
+            tweet = Tweet(status._json)
             self.dataHandler.handleNewTweet(self.pID, self.pDesc, tweet)
 
         except Exception as e:
-            # Most errors we're going to see relate to the handling of UTF-8 messages (sorry)
-            print(e)
+            print e
 
     def on_error(self, status_code):
         print >> sys.stderr, 'Encountered error with status code:', status_code
