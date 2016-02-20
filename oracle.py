@@ -13,9 +13,8 @@ class Oracle():
         print 'Invoking Oracle...'
 
         self.Loki = Loki
-        self.Loki.decryptFile(keychain)
 
-        #self.Loki.decryptFile('tweets.db')
+
         self.initResources()
 
     def initResources(self):
@@ -24,7 +23,7 @@ class Oracle():
         self.gmkey = GM_KEY
         self.gmaps = 'https://maps.googleapis.com/maps/api/geocode/json'
         self.emo_db = json.load(open('pyalchemy/emoji_database','r'))
-        self.alchemyAPI = alchemyapi.AlchemyAPI(self.Loki)
+        #self.alchemyAPI = alchemyapi.AlchemyAPI(self.Loki)
         self.count = 0
 
     def requestCoordinates(self, location):

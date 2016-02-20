@@ -62,3 +62,7 @@ tweetsSpring.db
 hyperion.py
 
 Event_mining.ipynb
+
+*.ipynb
+
+keys.py

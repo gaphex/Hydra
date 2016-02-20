@@ -79,7 +79,7 @@ class AlchemyAPI:
 
     def initResources(self, Loki):
         self.Loki = Loki
-        myProxy = self.Loki.fetchProxies(1)
+        #myProxy = self.Loki.fetchProxies(1)
         proxy = urllib2.ProxyHandler({'http': myProxy[0]['http']})
         opener = urllib2.build_opener()
         urllib2.install_opener(opener)

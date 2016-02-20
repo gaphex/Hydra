@@ -28,6 +28,7 @@ class Hydra():
         self.keychain = keychain
         self.batchesProcessed = 0
         self.auths = self.initAPIKeys(nP)
+        self.proxyList = self.loki.fetchProxies(self.threads)
 
     def run(self):
         print 'Running Hydra', self.version, 'in', self.mode, 'mode'
@@ -37,7 +38,6 @@ class Hydra():
     def main(self):
 
             try:
-                self.refreshProxies()
                 print 'Logging on...'
 
                 if self.mode == 'morph':
@@ -88,11 +88,6 @@ class Hydra():
         for i in range(self.threads):
             print self.meta[i]['pDesc'], 'proxied to', self.proxyList[i]['http']
         print ''
-
-    def refreshProxies(self):
-        self.lock.acquire()
-        self.proxyList = self.loki.fetchProxies(self.threads)
-        self.lock.release()
 
     def process(self):
         batchspan = int(self.lifespan)
@@ -150,6 +145,7 @@ if __name__ == "__main__":
     nP = 5
 
     Loki = Loki()
+    Loki.decryptFile(keychain)
 
     while True:
         try:

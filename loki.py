@@ -1,5 +1,4 @@
 __author__ = 'denisantyukhov'
-from copy import deepcopy
 
 class Blowfish:
 
@@ -395,8 +394,7 @@ import base64
 import os
 import urllib2
 from meta import *
-import random
-from sys import stdout
+import sys
 
 class Loki():
 
@@ -430,7 +428,7 @@ class Loki():
             with open(input_f,'rb') as f1:
                 with open(crypt_f,'wb') as f2:
                     for i in range(size):
-                        self.progress(i, size)
+                        progress(i, size)
                         t= f1.read(1)
                         u = cipher.encrypt(str(base64.b64encode(t)*2))+delimiter
                         f2.write(u)
@@ -466,7 +464,7 @@ class Loki():
                     lencr=f1.read().split(delimiter)
                     tot = len(lencr)-1
                     for i in range(tot):
-                        self.progress(i, tot)
+                        progress(i, tot)
                         f2.write((base64.b64decode(cipher.decrypt(lencr[i])[4:])))
             f1.close()
             f2.close()
@@ -483,63 +481,29 @@ class Loki():
             else:
                 print e, 'exception caught while decrypting', crypt_f
 
-    def checkOut(self, ip):
-        try:
-            proxy_handler = urllib2.ProxyHandler({'http': ip['http']})
-            opener = urllib2.build_opener(proxy_handler)
-            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-            urllib2.install_opener(opener)
-            req=urllib2.Request('http://www.icanhazip.com')
-            urllib2.urlopen(req, timeout=3)
-            print ip['http'], 'passed'
-            print ''
-            return ip
-
-        except Exception as e:
-            print ip['http'], 'failed:', e
-            print ''
-            return None
-
-    def fetchProxies(self, n):
-        print '----------------------------------'
-        print 'Fetching proxies...'
-        from meta import proxyList
-        proxList = deepcopy(proxyList)
-        responseList = []
-        response = None
-        test = None
-        myProxyList = []
-        while len(responseList) != n:
-            if not len(myProxyList):
-                myProxyList = [{'http': v} for v in proxList]
-            else:
-                random.shuffle(myProxyList)
-                test = myProxyList.pop()
-            if test:
-                if self.checkOut(test):
-                    response = test
-                else:
-                    response = None
-            if response:
-                if response not in responseList:
-                    responseList.append(response)
-                else:
-                    print 'found dupe proxy:', response
-        return responseList
-
-    def progress(self, i, n):
-        stdout.write("\r%s%%" % "{:5.2f}".format(100*i/float(n)))
-        stdout.flush()
-        if i == n-1:
-            stdout.write("\r100.00%")
-            print("\r\n")
-
     def GetSize(self, input):
         f=open(input,'rb')
         f.seek(0,2) # move the cursor to the end of the file
         size = f.tell()
         f.close()
         return size
+
+    @staticmethod
+    def fetchProxies(n):
+        pas, fal = [], []
+        print ('----------------------------------')
+        print ('Fetching proxies...')
+        myProxyList = load_proxies()
+        for i in myProxyList:
+            if len(pas) < n:
+                progress(len(pas), n, skip = 1)
+                t = checkOut(i)
+                if t:
+                    pas.append(t)
+                else:
+                    fal.append(t)
+            else: break
+        return pas
 
     def cleanUp(self, input_f):
         print 'Cleaning up...'
@@ -553,3 +517,40 @@ class Loki():
             os.remove('cerberus.pyc')
         except Exception as e:
             print e, 'exception caught while cleaning up'
+
+def load_proxies():
+    m = raw_input("read from: f/i? -->>")
+    if m == 'i':
+        cmd = raw_input("insert proxies -->>")
+        f = open('proxies','w')
+        f.write(cmd)
+        print ('wrote to file')
+    if m == 'f':
+        f = open('proxies', 'r')
+        cmd = f.read()
+    ip_p = list(set(cmd.split(' ')))
+    myProxyList = [{'http': v} for v in ip_p]
+    return myProxyList
+
+def checkOut(ip):
+    try:
+        proxy_handler = urllib2.ProxyHandler({'http': ip['http']})
+        opener = urllib2.build_opener(proxy_handler)
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        urllib2.install_opener(opener)
+        req=urllib2.Request('http://www.icanhazip.com')
+        urllib2.urlopen(req, timeout=3)
+        return ip
+    except Exception as e:
+        return None
+
+def progress(i, n, skip = 100, mode = 1):
+    if i%skip == 0 and mode == 1:
+        sys.stdout.write("\r%s%%" % "{:5.2f}".format(100*i/float(n)))
+        sys.stdout.flush()
+        if i >= (n/skip - 1)*skip:
+            sys.stdout.write("\r100.00%")
+            print("\r")
+    if i%skip == 0 and mode == 2:
+        sys.stdout.write("\r%s" % str(i))
+        sys.stdout.flush()
