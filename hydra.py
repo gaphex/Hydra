@@ -141,7 +141,7 @@ if __name__ == "__main__":
     keychain = 'keys.py'
     masterLock = Lock()
     mode = 'geo'
-    db = 'mongo'
+    db = 'SQL'
     nP = 5
 
     Loki = Loki()
