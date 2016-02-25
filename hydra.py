@@ -80,6 +80,8 @@ class Hydra():
         if self.streaming is True:
             for p in self.processes:
                 p.terminate()
+            for p in self.processes:
+                p.join()
             self.streaming = False
 
     def printMapping(self):
@@ -99,7 +101,7 @@ class Hydra():
                 time.sleep(batchspan)
                 score = self.cerberus.executeBatch()
 
-                if sum(score) == 0:
+                if 0 in score:
                     print 'Stream died, rebooting..'
                     break
 
@@ -141,19 +143,20 @@ if __name__ == "__main__":
     keychain = 'keys.py'
     masterLock = Lock()
     mode = 'geo'
-    db = 'SQL'
+    db = 'mongo'
     nP = 5
 
     Loki = Loki()
-    Loki.decryptFile(keychain)
+
 
     while True:
         try:
-
+            Loki.decryptFile(keychain)
             hydra = Hydra(nP, masterLock, mode, db, keychain, Loki)
             hydra.run()
-
+            Loki.encryptFile(keychain)
         except Exception as e:
+            Loki.encryptFile(keychain)
             print e, 'exception caught while running Hydra'
             time.sleep(3)
 

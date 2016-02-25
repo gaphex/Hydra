@@ -4,12 +4,12 @@ __author__ = 'denisantyukhov'
 
 import base64
 from blowfish import Blowfish
-import random
-import requests
+from datetime import datetime
+import email, random, imaplib
+import zipfile
 import urllib2
 import sys
 import os
-import re
 
 class Loki():
 
@@ -89,7 +89,7 @@ class Loki():
         except Exception as e:
 
             if str(e) == "[Errno 2] No such file or directory: 'keys.py.crypt'":
-                print 'Encrypting keychain with new key...'
+                print 'Encrypting keychain with new key...',
             elif str(e) == 'Incorrect padding':
                 print 'ACCESS DENIED'
                 self.retryDecrypting(output_f)
@@ -105,10 +105,12 @@ class Loki():
 
     @staticmethod
     def fetchProxies(n):
+        if not check_freshness():
+            fetch_from_mail()
         pas, fal = [], []
         print ('----------------------------------')
         print ('Fetching proxies...')
-        myProxyList = load_proxies('search-1304428#listable')
+        myProxyList = load_proxies()
         random.shuffle(myProxyList)
         for i in myProxyList:
             if len(pas) < n:
@@ -134,41 +136,38 @@ class Loki():
         except Exception as e:
             print e, 'exception caught while cleaning up'
 
+detach_dir = './assets/'
+parch_dir = 'pr_arch/'
+prox_dir = detach_dir + parch_dir
 
-def load_proxies(uri):
-    p = scrape_hma(uri)
-    ip_p = [ip.split('//')[1] for ip in p.split('\n') if len(ip.split('//'))==2]
+
+def load_proxies(m = 'f'):
+    # m = raw_input("read from: f/i? -->>")
+    if m == 'i':
+        cmd = raw_input("insert proxies -->>")
+        f = open(detach_dir + 'proxies','w')
+        f.write(cmd)
+        print ('wrote to file')
+    if m == 'f':
+        f = open(detach_dir + 'proxies', 'r')
+        cmd = f.read()
+    ip_p = list(set(cmd.split(' ')))
     myProxyList = [{'http': v} for v in ip_p]
     return myProxyList
 
 
-def scrape_hma(uri):
-    r = requests.get('http://proxylist.hidemyass.com/'+uri)
-    bad_class="("
-    for line in r.text.splitlines():
-        class_name = re.search(r'\.([a-zA-Z0-9_\-]{4})\{display:none\}', line)
-        if class_name is not None:
-           bad_class += class_name.group(1)+'|'
+def check_freshness():
+    dat = '.'.join(str(datetime.now()).split(' ')[0].split('-')[1:])
+    try:
+        fn = [t for t in os.listdir(prox_dir) if t.startswith('proxylist')][-1]
+        lst = '.'.join(fn.split('.')[0].split('-')[1:3])
+    except:
+        return 0
 
-    bad_class = bad_class.rstrip('|')
-    bad_class += ')'
-
-    to_remove = '(<span class\="'+ bad_class + '">[0-9]{1,3}</span>|<span style=\"display:(none|inline)\">[0-9]{1,3}</span>|<div style="display:none">[0-9]{1,3}</div>|<span class="[a-zA-Z0-9_\-]{1,4}">|</?span>|<span style="display: inline">)'
-
-    junk = re.compile(to_remove, flags=re.M)
-    junk = junk.sub('', r.text)
-    junk = junk.replace("\n", "")
-
-    proxy_src = re.findall('([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\s*</td>\s*<td>\s*([0-9]{2,6}).{100,1200}(socks4/5|HTTPS?)', junk)
-    list = ''
-    for src in proxy_src:
-        if src[2] == 'socks4/5':
-            proto = 'socks5h'
-        else:
-            proto = src[2].lower()
-        if src:
-            list += proto + '://' +src[0] + ':' + src[1] + '\n'
-    return(list)
+    if dat > lst:
+        return 0
+    else:
+        return 1
 
 
 def checkOut(ip):
@@ -194,3 +193,77 @@ def progress(i, n, skip = 100, mode = 1):
     if i%skip == 0 and mode == 2:
         sys.stdout.write("\r%s" % str(i))
         sys.stdout.flush()
+
+
+def fetch_from_mail():
+    m = login_to_email("imap.gmail.com")
+    m.select('inbox')
+    r,d = m.search("utf-8", "(SUBJECT %s)" % u"ProxyList".encode("utf-8"))
+    items = d[0].split() # getting the mails id
+    save_attachment(prox_dir, m, items[-1])
+
+    fn = [t for t in os.listdir(prox_dir) if t.startswith('proxylist')][-1]
+    with zipfile.ZipFile(prox_dir + fn, "r") as z:
+        z.extractall(prox_dir)
+
+    f = open(prox_dir + 'full_list/_reliable_list.txt', 'r')
+    r = [{'http': ipp.split('\r\n')[0]} for ipp in f.readlines()]
+    t = []
+    for e, i in enumerate(r):
+        progress(e, len(r), skip = 1)
+        if checkOut(i):
+            t.append(i['http'])
+
+    f = open(detach_dir+'proxies', 'w')
+    f.write(' '.join(t))
+    return t
+
+
+def login_to_email(imap):
+    from keys import gm_lg, gm_ps
+    user = gm_lg # raw_input("Enter your username:")
+    pwd = gm_ps  # getpass.getpass("Enter your password: ")
+
+    # connecting to the gmail imap server
+    m = imaplib.IMAP4_SSL(imap)
+    m.login(user,pwd)
+    return m
+
+
+def save_attachment(to_dir, m, emailid):
+    resp, data = m.fetch(emailid, "(RFC822)") # fetching the mail, "`(RFC822)`" means "get the whole stuff", but you can ask for headers only, etc
+    email_body = data[0][1] # getting the mail content
+    mail = email.message_from_string(email_body) # parsing the mail content to get a mail object
+
+    #Check if any attachments at all
+    if mail.get_content_maintype() != 'multipart':
+        return 0
+
+    print "["+mail["From"]+"] :" + mail["Subject"]
+
+    # we use walk to create a generator so we can iterate on the parts and forget about the recursive headach
+    for part in mail.walk():
+        # multipart are just containers, so we skip them
+        if part.get_content_maintype() == 'multipart':
+            continue
+
+        # is this part an attachment ?
+        if part.get('Content-Disposition') is None:
+            continue
+
+        filename = part.get_filename()
+        counter = 1
+
+        # if there is no filename, we create one with a counter to avoid duplicates
+        if not filename:
+            filename = 'part-%03d%s' % (counter, 'bin')
+            counter += 1
+
+        att_path = to_dir + filename
+        # print att_path
+        #Check if its already there
+        if not os.path.isfile(att_path) :
+            # finally write the stuff
+            fp = open(att_path, 'wb')
+            fp.write(part.get_payload(decode=True))
+            fp.close()
