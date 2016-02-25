@@ -123,7 +123,7 @@ class Cerberus():
                         for obj in buf:
                             tid = obj.json['id_str']
                             self.db[col].insert_one({'_id': tid, 'payload':obj.json})
-                            #self.db[col].insert_many([doc.status._json for doc in buf])
+
                     self.printScore(batch_cnt)
 
         except Exception as e:

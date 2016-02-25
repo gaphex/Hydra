@@ -105,20 +105,22 @@ class Loki():
 
     @staticmethod
     def fetchProxies(n):
-        pas, fal = [], []
         print ('----------------------------------')
         print ('Fetching proxies...')
-        myProxyList = load_proxies('search-1304428#listable')
-        random.shuffle(myProxyList)
-        for i in myProxyList:
-            if len(pas) < n:
-                progress(len(pas), n, skip = 1)
-                t = checkOut(i)
-                if t:
-                    pas.append(t)
-                else:
-                    fal.append(t)
-            else: break
+        pas = []
+        while len(pas) < n:
+            pas, fal = [], []
+            myProxyList = load_proxies('search-1304428#listable')
+            print 'fetched', len(myProxyList), 'proxies, validating'
+            for i in myProxyList:
+                if len(pas) < n:
+                    progress(len(pas), n, skip = 1)
+                    t = checkOut(i)
+                    if t:
+                        pas.append(t)
+                    else:
+                        fal.append(t)
+                else: break
         return pas
 
     def cleanUp(self, input_f):
@@ -178,7 +180,7 @@ def checkOut(ip):
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         urllib2.install_opener(opener)
         req=urllib2.Request('http://www.icanhazip.com')
-        urllib2.urlopen(req, timeout=3)
+        urllib2.urlopen(req, timeout=5)
         return ip
     except Exception as e:
         return None
