@@ -66,3 +66,5 @@ Event_mining.ipynb
 *.ipynb
 
 keys.py
+
+*.pyc

@@ -20,7 +20,7 @@ class Hydra():
         self.threads = nP
         self.lifespan = 60
         self.processes = []
-        self.version = '1.05'
+        self.version = '1.06'
         self.proxyList = None
         self.streaming = False
         self.processed = False
@@ -100,8 +100,8 @@ class Hydra():
             try:
                 time.sleep(batchspan)
                 score = self.cerberus.executeBatch()
-
-                if 0 in score:
+                dead = len([i for i in score if i == 0])
+                if dead > 1:
                     print 'Stream died, rebooting..'
                     break
 

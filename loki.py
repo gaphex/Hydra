@@ -4,7 +4,7 @@ __author__ = 'denisantyukhov'
 
 import base64
 from blowfish import Blowfish
-import random
+import time
 import requests
 import urllib2
 import sys
@@ -110,7 +110,7 @@ class Loki():
         pas = []
         while len(pas) < n:
             pas, fal = [], []
-            myProxyList = load_proxies('search-1304428#listable')
+            myProxyList = load_proxies('search-1307633/pg#listable')
             print 'fetched', len(myProxyList), 'proxies, validating'
             for i in myProxyList:
                 if len(pas) < n:
@@ -127,18 +127,17 @@ class Loki():
         print 'Cleaning up...'
         try:
             os.remove(input_f)
-            os.remove('keys.pyc')
-            os.remove('loki.pyc')
-            os.remove('meta.pyc')
-            os.remove('relay.pyc')
-            os.remove('oracle.pyc')
-            os.remove('cerberus.pyc')
         except Exception as e:
             print e, 'exception caught while cleaning up'
 
 
-def load_proxies(uri):
-    p = scrape_hma(uri)
+def load_proxies(sqr):
+    r = []
+    for i in range(1,5):
+        q = sqr.replace('/pg','/' + str(i))
+        r.append(scrape_hma(q))
+        time.sleep(2)
+    p = ''.join(r)
     ip_p = [ip.split('//')[1] for ip in p.split('\n') if len(ip.split('//'))==2]
     myProxyList = [{'http': v} for v in ip_p]
     return myProxyList
