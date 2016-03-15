@@ -20,6 +20,7 @@ class Tweet():
         self.timezone = timezone
         self.sentiment = ''
 
+
 class CustomStreamListener(tweepy.StreamListener):
 
     def __init__(self, dataHandler, streamHandler, pID, pDesc):
@@ -58,11 +59,3 @@ class CustomStreamListener(tweepy.StreamListener):
     def on_disconnect(self, notice):
         print notice
         return True # Don't kill the stream
-
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            encoded_object = list(obj.timetuple())[0:6]
-        else:
-            encoded_object =json.JSONEncoder.default(self, obj)
-        return encoded_object

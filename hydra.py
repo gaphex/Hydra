@@ -101,8 +101,8 @@ class Hydra():
                 time.sleep(batchspan)
                 score = self.cerberus.executeBatch()
                 dead = len([i for i in score if i == 0])
-                if dead > 1:
-                    print 'Stream died, rebooting..'
+                if dead > 2:
+                    print dead, 'streams have died, rebooting..'
                     break
 
                 if self.batchesProcessed % r == 0 and self.batchesProcessed > 0:
@@ -135,7 +135,7 @@ class Hydra():
 
 if __name__ == "__main__":
 
-    from tweety.streaming import Stream
+    from neutron.streaming import Stream
     from cerberus import Cerberus
     from relay import CustomStreamListener
     from loki import Loki
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     masterLock = Lock()
     mode = 'geo'
     db = 'mongo'
-    nP = 5
+    nP = 10
 
     Loki = Loki()
 

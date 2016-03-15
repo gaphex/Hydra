@@ -67,34 +67,42 @@ class Loki():
     def decryptFile(self, crypt_f):
         key = self.key
         delimiter = self.delimiter
+        c_file = crypt_f + '.crypt'
+        if os.path.isfile(c_file):
+            try:
+                cipher = Blowfish(key)
+                print '----------------------------------'
+                print 'Decrypting', c_file, '...'
+                with open(c_file, 'rb') as f1:
+                    with open(crypt_f, 'wb') as f2:
+                        dt = f1.read().split(delimiter)
+                        tot = len(dt)-1
+                        for i in range(tot):
+                            progress(i, tot)
+                            f2.write((base64.b64decode(cipher.decrypt(dt[i])[4:])))
+                f1.close()
+                f2.close()
+                print 'Success'
+                print '----------------------------------'
 
-        try:
-            cipher = Blowfish(key)
-            output_f = crypt_f
-            crypt_f = crypt_f + '.crypt'
-            print '----------------------------------'
-            print 'Decrypting', crypt_f, '...'
-            with open(crypt_f,'rb') as f1:
-                with open(output_f,'wb') as f2:
-                    lencr=f1.read().split(delimiter)
-                    tot = len(lencr)-1
-                    for i in range(tot):
-                        progress(i, tot)
-                        f2.write((base64.b64decode(cipher.decrypt(lencr[i])[4:])))
-            f1.close()
-            f2.close()
-            print 'Success'
-            print '----------------------------------'
+            except Exception as e:
+                if str(e) == 'Incorrect padding':
+                    print 'ACCESS DENIED'
+                    self.retryDecrypting(crypt_f)
+                else:
+                    print e, 'exception caught while decrypting', crypt_f
+        elif os.path.isfile(crypt_f):
+            print 'encrypting keychain with a new key...'
+            new_pass = raw_input('enter new pass --->>')
+            if isinstance(new_pass, str):
+                try:
+                    self.key = new_pass
+                    self.encryptFile(crypt_f)
+                    self.retryDecrypting(crypt_f)
+                except Exception as e:
+                    print e
 
-        except Exception as e:
 
-            if str(e) == "[Errno 2] No such file or directory: 'keys.py.crypt'":
-                print 'Encrypting keychain with new key...'
-            elif str(e) == 'Incorrect padding':
-                print 'ACCESS DENIED'
-                self.retryDecrypting(output_f)
-            else:
-                print e, 'exception caught while decrypting', crypt_f
 
     def GetSize(self, input):
         f=open(input,'rb')
@@ -126,7 +134,8 @@ class Loki():
     def cleanUp(self, input_f):
         print 'Cleaning up...'
         try:
-            os.remove(input_f)
+            pass # os.remove(input_f)
+
         except Exception as e:
             print e, 'exception caught while cleaning up'
 
@@ -185,13 +194,11 @@ def checkOut(ip):
         return None
 
 
-def progress(i, n, skip = 100, mode = 1):
-    if i%skip == 0 and mode == 1:
+def progress(i, n, skip=100, mode=1):
+    if (i%skip == 0 and mode == 1) or n < i + 100:
         sys.stdout.write("\r%s%%" % "{:5.2f}".format(100*i/float(n)))
         sys.stdout.flush()
-        if i >= (n/skip - 1)*skip:
-            sys.stdout.write("\r100.00%")
-            print("\r")
+
     if i%skip == 0 and mode == 2:
         sys.stdout.write("\r%s" % str(i))
         sys.stdout.flush()

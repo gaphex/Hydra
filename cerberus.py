@@ -7,13 +7,13 @@ import _sqlite3
 import json
 
 
-class Cerberus():
-    def __init__(self, nP, masterLock, mode, keychain, Loki):
-        self.nP = nP
+class Cerberus(object):
+    def __init__(self, n_streams, master_lock, mode, keychain, loki):
+        self.nP = n_streams
         self.mode = mode
         self.totalScore = 0
-        self.lock = masterLock
-        self.oracle = Oracle(keychain, Loki)
+        self.lock = master_lock
+        self.oracle = Oracle(keychain, loki)
         self.json_db_filename = 'tweetDB.json'
         self.SQL_db_filename = 'tweets.db'
         self.nbatches = 0
@@ -35,10 +35,10 @@ class Cerberus():
             self.db = self.json_db_filename
 
     def db_count(self, table):
-        rowsQuery = "SELECT Count() FROM %s" % table
-        self.curs.execute(rowsQuery)
-        numberOfRows = self.curs.fetchone()[0]
-        return numberOfRows
+        r_query = "SELECT Count() FROM %s" % table
+        self.curs.execute(r_query)
+        n_rows = self.curs.fetchone()[0]
+        return n_rows
 
     def handleNewTweet(self, pID, pDesc, tweet):
         self.lock.acquire()
@@ -51,23 +51,33 @@ class Cerberus():
             self.lock.release()
 
     def printScore(self, batchc):
+
         if self.mode == 'mongo':
             name = self.mode + '.' + self.db.name
             dbc = sum([self.db[cname].count() for cname in self.db.collection_names()])
         else:
             name = self.db
             dbc = self.db_count('tweets')
+
+        batch_number = 'Batch' + str(self.nbatches)
+        announcement = '    Successfully wrote ' + str(sum(batchc)) + \
+                       ' entities to ' + str(name) + ' for a total of ' + str(dbc) + '    '
+        statistics = str(batchc)
+
+        l = len(announcement)
+        t1 = int((l - len(batch_number))/2)
+        t2 = int((l - len(statistics))/2)
+
         print ''
-        print '--------------------------Batch #{:4d}--------------------------------------'.format(self.nbatches)
-        print 'Successfully wrote', sum(batchc), 'entities to', name, 'for a total of', dbc
-        print '---------------------{:12s}-------------------------'.format(str(batchc))
-        print ''
+        print t1*'-', batch_number, (l-len(batch_number)-t1)*'-'
+        print announcement
+        print t2*'-', statistics, (l-len(statistics)-t2)*'-'
 
     def readFromJSON(self):
         json_file = open(self.json_db_filename,'r')
         json_data = json.load(json_file)
         json_file.close()
-        return (json_data,len(json_data))
+        return json_data,len(json_data)
 
     def writeToJSON(self, json_data):
         json_file = open(self.json_db_filename,'w')
@@ -110,8 +120,10 @@ class Cerberus():
                 if self.mode == 'SQL':
                     for buf in buffers:
                         for tweet in buf:
-                            self.curs.execute("insert into tweets (tid, username, content, cat, coordinates, sentiment, source) values(?, ?, ?, ?, ?, ?, ?)",
-                                              (tweet.tweetID, tweet.userID, tweet.text, str(tweet.createdAt), tweet.location, tweet.sentiment, tweet.device))
+                            self.curs.execute("insert into tweets (tid, username, content, cat, /"
+                                              "coordinates, sentiment, source) values(?, ?, ?, ?, ?, ?, ?)",
+                                              (tweet.tweetID, tweet.userID, tweet.text, str(tweet.createdAt),
+                                               tweet.location, tweet.sentiment, tweet.device))
                             self.conn.commit()
 
                     self.printScore(batch_cnt)
