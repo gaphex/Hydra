@@ -4,6 +4,7 @@ __author__ = 'denisantyukhov'
 
 import base64
 from blowfish import Blowfish
+from utils import decorate, progress
 import time
 import requests
 import urllib2
@@ -38,8 +39,8 @@ class Loki():
             crypt_f=input_f+'.crypt'
             cipher = Blowfish(key)
             print ''
-            print '----------------------------------'
-            print 'Encrypting', input_f, '...'
+            
+            decorate(' Encrypting ' + input_f + '...', 64, '-') 
             with open(input_f,'rb') as f1:
                 with open(crypt_f,'wb') as f2:
                     for i in range(size):
@@ -56,9 +57,7 @@ class Loki():
             print e, 'exception caught while encrypting', input_f
 
         finally:
-            print 'Success'
-            print '----------------------------------'
-            print ''
+            decorate('Success', 64, '-')
 
     def retryDecrypting(self, output_f):
         self.authorise()
@@ -71,8 +70,8 @@ class Loki():
         if os.path.isfile(c_file):
             try:
                 cipher = Blowfish(key)
-                print '----------------------------------'
-                print 'Decrypting', c_file, '...'
+                
+                decorate(' Decrypting ' + c_file + '...', 64, '-')
                 with open(c_file, 'rb') as f1:
                     with open(crypt_f, 'wb') as f2:
                         dt = f1.read().split(delimiter)
@@ -82,8 +81,8 @@ class Loki():
                             f2.write((base64.b64decode(cipher.decrypt(dt[i])[4:])))
                 f1.close()
                 f2.close()
-                print 'Success'
-                print '----------------------------------'
+		
+                decorate('Success', 64, '-')
 
             except Exception as e:
                 if str(e) == 'Incorrect padding':
@@ -113,7 +112,7 @@ class Loki():
 
     @staticmethod
     def fetchProxies(n):
-        print ('----------------------------------')
+        
         print ('Fetching proxies...')
         pas = []
         while len(pas) < n:
@@ -193,12 +192,3 @@ def checkOut(ip):
     except Exception as e:
         return None
 
-
-def progress(i, n, skip=100, mode=1):
-    if (i%skip == 0 and mode == 1) or n < i + 100:
-        sys.stdout.write("\r%s%%" % "{:5.2f}".format(100*i/float(n)))
-        sys.stdout.flush()
-
-    if i%skip == 0 and mode == 2:
-        sys.stdout.write("\r%s" % str(i))
-        sys.stdout.flush()

@@ -1,7 +1,8 @@
 __author__ = 'denisantyukhov'
 from multiprocessing import Queue
-from oracle import Oracle
 from pymongo import MongoClient
+from datetime import datetime
+from oracle import Oracle
 from meta import geodata
 import _sqlite3
 import json
@@ -42,7 +43,6 @@ class Cerberus(object):
 
     def handleNewTweet(self, pID, pDesc, tweet):
         self.lock.acquire()
-        #print tweet
         try:
             self.stacks[int(pID)].put(tweet)
         except Exception as e:
@@ -59,9 +59,9 @@ class Cerberus(object):
             name = self.db
             dbc = self.db_count('tweets')
 
-        batch_number = 'Batch' + str(self.nbatches)
-        announcement = '    Successfully wrote ' + str(sum(batchc)) + \
-                       ' entities to ' + str(name) + ' for a total of ' + str(dbc) + '    '
+        batch_number = 'Batch ' + str(self.nbatches)
+        announcement = '    Wrote ' + str(sum(batchc)) + \
+                       ' entities to ' + str(name) + ' for a total of ' + str(dbc) + '   '
         statistics = str(batchc)
 
         l = len(announcement)
@@ -77,7 +77,7 @@ class Cerberus(object):
         json_file = open(self.json_db_filename,'r')
         json_data = json.load(json_file)
         json_file.close()
-        return json_data,len(json_data)
+        return json_data, len(json_data)
 
     def writeToJSON(self, json_data):
         json_file = open(self.json_db_filename,'w')
@@ -134,12 +134,13 @@ class Cerberus(object):
                         col = geodata[i]['pDesc']
                         for obj in buf:
                             tid = obj.json['id_str']
-                            self.db[col].insert_one({'_id': tid, 'payload':obj.json})
+			    cat = date_convert(obj.json['created_at'])
+                            self.db[col].insert_one({'_id': tid, 'created': cat, 'payload':obj.json})
 
                     self.printScore(batch_cnt)
 
         except Exception as e:
-            print e, 'exception caught while writing to database'
+            print type(e).__name__,'exception caught while writing to database'
 
         finally:
             self.lock.release()
@@ -149,3 +150,6 @@ class Cerberus(object):
         del self.stacks
         self.executeBatch()
         self.initResources()
+
+def date_convert(strdate):
+    return datetime.strptime(strdate, '%a %b %d %H:%M:%S +0000 %Y')

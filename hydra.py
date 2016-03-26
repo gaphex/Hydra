@@ -20,7 +20,7 @@ class Hydra():
         self.threads = nP
         self.lifespan = 60
         self.processes = []
-        self.version = '1.06'
+        self.version = '1.06a'
         self.proxyList = None
         self.streaming = False
         self.processed = False
@@ -31,7 +31,7 @@ class Hydra():
         self.proxyList = self.loki.fetchProxies(self.threads)
 
     def run(self):
-        print 'Running Hydra', self.version, 'in', self.mode, 'mode'
+        print '\nRunning Hydra', self.version, 'in', self.mode, 'mode'
         self.cerberus = Cerberus(self.threads, masterLock, self.db, self.keychain, self.loki)
         self.main()
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     masterLock = Lock()
     mode = 'geo'
     db = 'mongo'
-    nP = 10
+    nP = 12
 
     Loki = Loki()
 
