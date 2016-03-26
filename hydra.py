@@ -157,6 +157,7 @@ if __name__ == "__main__":
     db = 'mongo'
     nP = 12
 
+    location = None
     if len(sys.argv) > 1:
         geolocator = Nominatim()
         location = geolocator.geocode(str(sys.argv[1]))
