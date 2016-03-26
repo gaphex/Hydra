@@ -2,16 +2,20 @@
 # -*- coding: utf-8 -*-
 __author__ = 'denisantyukhov'
 
+
+import sys
 import time
 import tweepy
+import numpy as np
 import multiprocessing as mp
 from multiprocessing import Lock
+from geopy.geocoders import Nominatim
 
 
 
 class Hydra():
 
-    def __init__(self, nP, masterLock, mode, db, keychain, loki):
+    def __init__(self, nP, masterLock, mode, db, keychain, loki, loc = None):
 
 
         self.db = db
@@ -20,6 +24,7 @@ class Hydra():
         self.threads = nP
         self.lifespan = 60
         self.processes = []
+        self.location = loc
         self.version = '1.06a'
         self.proxyList = None
         self.streaming = False
@@ -46,12 +51,21 @@ class Hydra():
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           self.cerberus, self)) for x in range(self.threads)]
-                if self.mode == 'geo':
+                elif self.mode == 'geo':
                     from meta import geodata
                     self.meta = geodata
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           self.cerberus, self)) for x in range(self.threads)]
+                    
+                elif self.mode == 'loc':
+                    name = self.location.address.split(',')[0]
+                    print 'storing to', name.strip()
+                    d = 0.01
+                    a,b = np.array(location.point[0:2][::-1]) - np.array([d, d]), np.array(location.point[0:2][::-1]) + np.array([d, d])
+                    print np.concatenate([a,b])
+                    self.processes = [mp.Process(target=self.openStream, args=(self.auths[0], 'geo', list(np.concatenate([a,b])),
+                    0, name.decode('utf-8'), self.proxyList[0], self.cerberus, self))]
 
                 #self.printMapping()
 
@@ -69,7 +83,9 @@ class Hydra():
 
     def initiateStreaming(self):
         print ''
-        print '---------------Connecting to', self.threads, 'data streams---------------'
+	if self.threads > 1: s = 's'
+	else: s = ''
+        print '---------------Connecting to', self.threads, 'data stream'+s+'---------------'
         print ''
         if self.streaming is False:
             for p in self.processes:
@@ -134,17 +150,29 @@ class Hydra():
 
 
 if __name__ == "__main__":
-
-    from neutron.streaming import Stream
-    from cerberus import Cerberus
-    from relay import CustomStreamListener
-    from loki import Loki
-
+    
     keychain = 'keys.py'
     masterLock = Lock()
     mode = 'geo'
     db = 'mongo'
     nP = 12
+
+    if len(sys.argv) > 1:
+        geolocator = Nominatim()
+        location = geolocator.geocode(str(sys.argv[1]))
+	if location:
+		print location
+		mode = 'loc'
+        	nP = 1
+    
+    
+    
+    from neutron.streaming import Stream
+    from cerberus import Cerberus
+    from relay import CustomStreamListener
+    from loki import Loki
+
+    
 
     Loki = Loki()
 
@@ -152,23 +180,10 @@ if __name__ == "__main__":
     while True:
         try:
             Loki.decryptFile(keychain)
-            hydra = Hydra(nP, masterLock, mode, db, keychain, Loki)
+            hydra = Hydra(nP, masterLock, mode, db, keychain, Loki, location)
             hydra.run()
             Loki.encryptFile(keychain)
         except Exception as e:
             Loki.encryptFile(keychain)
             print e, 'exception caught while running Hydra'
             time.sleep(3)
-
-
-
-
-
-
-
-
-
-
-
-
-
