@@ -85,9 +85,10 @@ class Cerberus(object):
         json_file.close()
         return len(json_data)
 
-    def executeBatch(self):
+    def executeBatch(self, dbs):
 
         self.lock.acquire()
+	self.dbs = dbs
         self.nbatches += 1
         buffers = []
         batch_cnt = []
@@ -131,7 +132,7 @@ class Cerberus(object):
                 if self.mode == 'mongo':
                     score = 0
                     for i, buf in enumerate(buffers):
-                        col = geodata[i]['pDesc']
+                        col = self.dbs[i]
                         for obj in buf:
                             tid = obj.json['id_str']
 			    cat = date_convert(obj.json['created_at'])

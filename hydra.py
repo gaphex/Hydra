@@ -48,24 +48,33 @@ class Hydra():
                 if self.mode == 'morph':
                     from meta import metadata
                     self.meta = metadata
+		    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           self.cerberus, self)) for x in range(self.threads)]
+		    
+
                 elif self.mode == 'geo':
                     from meta import geodata
                     self.meta = geodata
+		    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
                                                                           self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
                                                                           self.cerberus, self)) for x in range(self.threads)]
+		     
                     
                 elif self.mode == 'loc':
-                    name = self.location.address.split(',')[0]
-                    print 'storing to', name.strip()
-                    d = 0.01
-                    a,b = np.array(location.point[0:2][::-1]) - np.array([d, d]), np.array(location.point[0:2][::-1]) + np.array([d, d])
-                    print np.concatenate([a,b])
-                    self.processes = [mp.Process(target=self.openStream, args=(self.auths[0], 'geo', list(np.concatenate([a,b])),
-                    0, name.decode('utf-8'), self.proxyList[0], self.cerberus, self))]
+		    name = []
+		    C = []
+		    for loc in self.location:
+                        name.append(loc.address.split(',')[0])
+                        d = 0.01
+                        a,b = np.array(loc.point[0:2][::-1]) - np.array([d, d]), np.array(loc.point[0:2][::-1]) + np.array([d, d])
+                        C.append(list(np.concatenate([a,b])))
+		    self.dbnames = name
+		    print name
+                    self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], 'geo', C[x],
+                    x, name[x].decode('utf-8'), self.proxyList[x], self.cerberus, self)) for x in range(self.threads)]
 
                 #self.printMapping()
 
@@ -115,7 +124,7 @@ class Hydra():
         while True:
             try:
                 time.sleep(batchspan)
-                score = self.cerberus.executeBatch()
+                score = self.cerberus.executeBatch(self.dbnames)
                 dead = len([i for i in score if i == 0])
                 if dead > 2:
                     print dead, 'streams have died, rebooting..'
@@ -157,14 +166,17 @@ if __name__ == "__main__":
     db = 'mongo'
     nP = 12
 
-    location = None
+    
+    locs = []
     if len(sys.argv) > 1:
         geolocator = Nominatim()
-        location = geolocator.geocode(str(sys.argv[1]))
-	if location:
+	for argv in sys.argv[1:]:
+            location = geolocator.geocode(str(argv))
+	    if location:
 		print location
+		locs.append(location)
 		mode = 'loc'
-        	nP = 1
+    	nP = len(locs)
     
     
     
@@ -181,7 +193,7 @@ if __name__ == "__main__":
     while True:
         try:
             Loki.decryptFile(keychain)
-            hydra = Hydra(nP, masterLock, mode, db, keychain, Loki, location)
+            hydra = Hydra(nP, masterLock, mode, db, keychain, Loki, locs)
             hydra.run()
             Loki.encryptFile(keychain)
         except Exception as e:
