@@ -136,7 +136,7 @@ class Cerberus(object):
                         for obj in buf:
                             tid = obj.json['id_str']
 			    cat = date_convert(obj.json['created_at'])
-                            self.db[col].insert_one({'_id': tid, 'created': cat, 'payload':obj.json})
+                            self.db[col].insert_one({'created': cat, 'payload':obj.json})
 
                     self.printScore(batch_cnt)
 
