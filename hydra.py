@@ -11,6 +11,12 @@ import multiprocessing as mp
 from multiprocessing import Lock
 from geopy.geocoders import Nominatim
 
+from config import lifespan
+
+from neutron.streaming import Stream
+from cerberus import Cerberus
+from relay import CustomStreamListener
+from loki import Loki
 
 
 class Hydra():
@@ -22,10 +28,10 @@ class Hydra():
         self.mode = mode
         self.loki = loki
         self.threads = nP
-        self.lifespan = 60
+        self.lifespan = lifespan
         self.processes = []
         self.location = loc
-        self.version = '1.06a'
+        self.version = '1.07'
         self.proxyList = None
         self.streaming = False
         self.processed = False
@@ -48,35 +54,35 @@ class Hydra():
                 if self.mode == 'morph':
                     from meta import metadata
                     self.meta = metadata
-		    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
+                    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['track'],
-                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
-                                                                          self.cerberus, self)) for x in range(self.threads)]
-		    
+                                                                               self.meta[x]['pID'],
+                                                                               self.meta[x]['pDesc'].decode('utf-8'),
+                                                                               self.proxyList[x],
+                                                                               self.cerberus, self)) for x in range(self.threads)]
 
                 elif self.mode == 'geo':
                     from meta import geodata
                     self.meta = geodata
-		    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
+                    self.dbnames = [self.meta[x]['pDesc'].decode('utf-8') for x in range(self.threads)]
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], self.mode, self.meta[x]['crds'],
-                                                                          self.meta[x]['pID'], self.meta[x]['pDesc'].decode('utf-8'), self.proxyList[x],
-                                                                          self.cerberus, self)) for x in range(self.threads)]
-		     
+                                                                               self.meta[x]['pID'],
+                                                                               self.meta[x]['pDesc'].decode('utf-8'),
+                                                                               self.proxyList[x],
+                                                                               self.cerberus, self)) for x in range(self.threads)]
                     
                 elif self.mode == 'loc':
-		    name = []
-		    C = []
-		    for loc in self.location:
+                    name = []
+                    C = []
+                    for loc in self.location:
                         name.append(loc.address.split(',')[0])
                         d = 0.01
                         a,b = np.array(loc.point[0:2][::-1]) - np.array([d, d]), np.array(loc.point[0:2][::-1]) + np.array([d, d])
                         C.append(list(np.concatenate([a,b])))
-		    self.dbnames = name
-		    print name
+                    self.dbnames = name
+                    print name
                     self.processes = [mp.Process(target=self.openStream, args=(self.auths[x], 'geo', C[x],
                     x, name[x].decode('utf-8'), self.proxyList[x], self.cerberus, self)) for x in range(self.threads)]
-
-                #self.printMapping()
 
                 self.initiateStreaming()
                 self.process()
@@ -92,8 +98,8 @@ class Hydra():
 
     def initiateStreaming(self):
         print ''
-	if self.threads > 1: s = 's'
-	else: s = ''
+        if self.threads > 1: s = 's'
+        else: s = ''
         print '---------------Connecting to', self.threads, 'data stream'+s+'---------------'
         print ''
         if self.streaming is False:
@@ -170,22 +176,13 @@ if __name__ == "__main__":
     locs = []
     if len(sys.argv) > 1:
         geolocator = Nominatim()
-	for argv in sys.argv[1:]:
+        for argv in sys.argv[1:]:
             location = geolocator.geocode(str(argv))
-	    if location:
-		print location
-		locs.append(location)
-		mode = 'loc'
-    	nP = len(locs)
-    
-    
-    
-    from neutron.streaming import Stream
-    from cerberus import Cerberus
-    from relay import CustomStreamListener
-    from loki import Loki
-
-    
+            if location:
+                print location
+                locs.append(location)
+                mode = 'loc'
+        nP = len(locs)
 
     Loki = Loki()
 

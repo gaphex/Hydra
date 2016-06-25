@@ -5,12 +5,15 @@ __author__ = 'denisantyukhov'
 import base64
 from blowfish import Blowfish
 from utils import decorate, progress
+from tqdm import tqdm
 import time
 import requests
 import urllib2
 import sys
 import os
 import re
+
+from config import salt, proxy_base, proxy_query, ip_url
 
 class Loki():
 
@@ -20,7 +23,7 @@ class Loki():
         if 'self.key' not in locals():
             self.authorise()
 
-        self.delimiter = 'XMD5A'
+        self.delimiter = salt
 
     def authorise(self):
         while True:
@@ -43,8 +46,7 @@ class Loki():
             decorate(' Encrypting ' + input_f + '...', 64, '-') 
             with open(input_f,'rb') as f1:
                 with open(crypt_f,'wb') as f2:
-                    for i in range(size):
-                        progress(i, size)
+                    for i in tqdm(range(size)):
                         t= f1.read(1)
                         u = cipher.encrypt(str(base64.b64encode(t)*2))+delimiter
                         f2.write(u)
@@ -76,12 +78,12 @@ class Loki():
                     with open(crypt_f, 'wb') as f2:
                         dt = f1.read().split(delimiter)
                         tot = len(dt)-1
-                        for i in range(tot):
-                            progress(i, tot)
+                        for i in tqdm(range(tot)):
+
                             f2.write((base64.b64decode(cipher.decrypt(dt[i])[4:])))
                 f1.close()
                 f2.close()
-		
+
                 decorate('Success', 64, '-')
 
             except Exception as e:
@@ -117,14 +119,16 @@ class Loki():
         pas = []
         while len(pas) < n:
             pas, fal = [], []
-            myProxyList = load_proxies('search-1307633/pg#listable')
+            myProxyList = load_proxies(proxy_query)
             print 'fetched', len(myProxyList), 'proxies, validating'
+            bar = tqdm(total=n)
             for i in myProxyList:
+            
                 if len(pas) < n:
-                    progress(len(pas), n, skip = 1)
                     t = checkOut(i)
                     if t:
                         pas.append(t)
+                        bar.update(1)
                     else:
                         fal.append(t)
                 else: break
@@ -152,7 +156,7 @@ def load_proxies(sqr):
 
 
 def scrape_hma(uri):
-    r = requests.get('http://proxylist.hidemyass.com/'+uri)
+    r = requests.get(proxy_base+uri)
     bad_class="("
     for line in r.text.splitlines():
         class_name = re.search(r'\.([a-zA-Z0-9_\-]{4})\{display:none\}', line)
@@ -186,7 +190,7 @@ def checkOut(ip):
         opener = urllib2.build_opener(proxy_handler)
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         urllib2.install_opener(opener)
-        req=urllib2.Request('http://www.icanhazip.com')
+        req=urllib2.Request(ip_url)
         urllib2.urlopen(req, timeout=5)
         return ip
     except Exception as e:

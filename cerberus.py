@@ -7,6 +7,8 @@ from meta import geodata
 import _sqlite3
 import json
 
+from config import json_db, sql_db, mongo_db
+
 
 class Cerberus(object):
     def __init__(self, n_streams, master_lock, mode, keychain, loki):
@@ -15,8 +17,8 @@ class Cerberus(object):
         self.totalScore = 0
         self.lock = master_lock
         self.oracle = Oracle(keychain, loki)
-        self.json_db_filename = 'tweetDB.json'
-        self.SQL_db_filename = 'tweets.db'
+        self.json_db_filename = json_db
+        self.SQL_db_filename = sql_db
         self.nbatches = 0
         self.initResources()
 
@@ -24,7 +26,7 @@ class Cerberus(object):
         self.stacks = [Queue() for _ in range(self.nP)]
         if self.mode == 'mongo':
             self.client = MongoClient()
-            self.db = self.client.tweets
+            self.db = self.client[mongo_db]
 
         if self.mode == 'SQL':
             self.db = self.SQL_db_filename
@@ -88,7 +90,7 @@ class Cerberus(object):
     def executeBatch(self, dbs):
 
         self.lock.acquire()
-	self.dbs = dbs
+        self.dbs = dbs
         self.nbatches += 1
         buffers = []
         batch_cnt = []
@@ -135,7 +137,7 @@ class Cerberus(object):
                         col = self.dbs[i]
                         for obj in buf:
                             tid = obj.json['id_str']
-			    cat = date_convert(obj.json['created_at'])
+                            cat = date_convert(obj.json['created_at'])
                             self.db[col].insert_one({'created': cat, 'payload':obj.json})
 
                     self.printScore(batch_cnt)
