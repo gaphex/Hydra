@@ -1,13 +1,16 @@
 import sys
 
-def decorate(this, n, d):
-    s21 = int((n - len(this))/2) * d
-    s22 = (n - len(this) - len(s21)) * d
-    s1 = n * d
-    print ''
-    print s1
-    print s21 + this + s22
-    print s1
+def decorate(this, n, d, mode=0):
+    if mode == 0:
+        print this
+    else:
+        s21 = int((n - len(this))/2) * d
+        s22 = (n - len(this) - len(s21)) * d
+        s1 = n * d
+        print ''
+        print s1
+        print s21 + this + s22
+        print s1
 
 
 def progress(i, n, skip=100, mode=1):

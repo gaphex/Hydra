@@ -7,3 +7,8 @@ salt = 'XMD5A'
 proxy_query = 'search-1307633/pg#listable'
 ip_url = 'http://www.icanhazip.com'
 proxy_base = 'http://proxylist.hidemyass.com/'
+
+op_mode = 'geo'
+db_type = 'mongo'
+key_file = 'keys.py'
+n_streams = 12

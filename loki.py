@@ -8,6 +8,7 @@ from utils import decorate, progress
 from tqdm import tqdm
 import time
 import requests
+import getpass
 import urllib2
 import sys
 import os
@@ -27,7 +28,8 @@ class Loki():
 
     def authorise(self):
         while True:
-            pwd = raw_input('Enter Password: ')
+            print 'Enter Password: '
+            pwd = getpass.getpass()
             if len(pwd) > 7:
                 self.key = pwd
                 break
@@ -136,11 +138,13 @@ class Loki():
 
     def cleanUp(self, input_f):
         print 'Cleaning up...'
-        try:
-            pass # os.remove(input_f)
+        for f in [input_f, input_f + 'c']:
+            try:
+                os.remove(f)
+                print f, 'deleted'
 
-        except Exception as e:
-            print e, 'exception caught while cleaning up'
+            except Exception as e:
+                pass
 
 
 def load_proxies(sqr):

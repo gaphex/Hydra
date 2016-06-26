@@ -11,7 +11,7 @@ import multiprocessing as mp
 from multiprocessing import Lock
 from geopy.geocoders import Nominatim
 
-from config import lifespan
+from config import lifespan, op_mode, n_streams, db_type, key_file
 
 from neutron.streaming import Stream
 from cerberus import Cerberus
@@ -31,14 +31,16 @@ class Hydra():
         self.lifespan = lifespan
         self.processes = []
         self.location = loc
-        self.version = '1.07'
+        self.version = '1.07a'
         self.proxyList = None
         self.streaming = False
         self.processed = False
         self.lock = masterLock
         self.keychain = keychain
         self.batchesProcessed = 0
+        
         self.auths = self.initAPIKeys(nP)
+        self.loki.encryptFile(self.keychain)
         self.proxyList = self.loki.fetchProxies(self.threads)
 
     def run(self):
@@ -166,11 +168,11 @@ class Hydra():
 
 if __name__ == "__main__":
     
-    keychain = 'keys.py'
+    keychain = key_file
     masterLock = Lock()
-    mode = 'geo'
-    db = 'mongo'
-    nP = 12
+    mode = op_mode
+    db = db_type
+    nP = n_streams
 
     
     locs = []
@@ -192,7 +194,7 @@ if __name__ == "__main__":
             Loki.decryptFile(keychain)
             hydra = Hydra(nP, masterLock, mode, db, keychain, Loki, locs)
             hydra.run()
-            Loki.encryptFile(keychain)
+            
         except Exception as e:
             Loki.encryptFile(keychain)
             print e, 'exception caught while running Hydra'
