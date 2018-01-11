@@ -1,13 +1,9 @@
-# Tweepy
-# Copyright 2009-2010 Joshua Roesslein
-# See LICENSE for details.
-
-# Appengine users: https://developers.google.com/appengine/docs/python/sockets/#making_httplib_use_sockets
-
 from __future__ import absolute_import, print_function
 
 import logging
+import re
 import requests
+import sys
 from requests.exceptions import Timeout
 from threading import Thread
 from time import sleep
@@ -19,6 +15,7 @@ import ssl
 from tweepy.models import Status
 from tweepy.api import API
 from tweepy.error import TweepError
+
 from tweepy.utils import import_simplejson
 json = import_simplejson()
 
@@ -32,7 +29,6 @@ class StreamListener(object):
 
     def on_connect(self):
         """Called once connected to streaming server.
-
         This will be invoked once a successful response
         is received from the server. Allows the listener
         to perform some work prior to entering the read loop.
@@ -41,7 +37,6 @@ class StreamListener(object):
 
     def on_data(self, raw_data):
         """Called when raw data is received from connection.
-
         Override this method if you wish to manually handle
         the stream data. Return False to stop stream and close connection.
         """
@@ -104,7 +99,6 @@ class StreamListener(object):
 
     def on_friends(self, friends):
         """Called when a friends list arrives.
-
         friends is a list that contains user_id
         """
         return
@@ -123,7 +117,6 @@ class StreamListener(object):
 
     def on_disconnect(self, notice):
         """Called when twitter sends a disconnect notice
-
         Disconnect codes are listed here:
         https://dev.twitter.com/docs/streaming-apis/messages#Disconnect_messages_disconnect
         """
@@ -136,7 +129,6 @@ class StreamListener(object):
 
 class ReadBuffer(object):
     """Buffer data from the response in a smarter way than httplib/requests can.
-
     Tweets are roughly in the 2-12kb range, averaging around 3kb.
     Requests/urllib3/httplib/socket all use socket.read, which blocks
     until enough data is returned. On some systems (eg google appengine), socket
@@ -147,19 +139,26 @@ class ReadBuffer(object):
     use small chunks so it can read the length and the tweet in 2 read calls.
     """
 
-    def __init__(self, stream, chunk_size):
+    def __init__(self, stream, chunk_size, encoding='utf-8'):
         self._stream = stream
-        self._buffer = u""
+        self._buffer = six.b('')
         self._chunk_size = chunk_size
+        self._encoding = encoding
 
     def read_len(self, length):
         while not self._stream.closed:
             if len(self._buffer) >= length:
                 return self._pop(length)
             read_len = max(self._chunk_size, length - len(self._buffer))
-            self._buffer += self._stream.read(read_len).decode("ascii")
+            self._buffer += self._stream.read(read_len)
+        return six.b('')
 
-    def read_line(self, sep='\n'):
+    def read_line(self, sep=six.b('\n')):
+        """Read the data stream until a given separator is found (default \n)
+        :param sep: Separator to read until. Must by of the bytes type (str in python 2,
+            bytes in python 3)
+        :return: The str of the data read until sep
+        """
         start = 0
         while not self._stream.closed:
             loc = self._buffer.find(sep, start)
@@ -167,16 +166,13 @@ class ReadBuffer(object):
                 return self._pop(loc + len(sep))
             else:
                 start = len(self._buffer)
-
-            try:
-                self._buffer += self._stream.read(self._chunk_size).decode("ascii")
-            except Exception as e:
-                print ('Connection issues', e)
+            self._buffer += self._stream.read(self._chunk_size)
+        return six.b('')
 
     def _pop(self, length):
         r = self._buffer[:length]
         self._buffer = self._buffer[length:]
-        return r
+        return r.decode(self._encoding)
 
 
 class Stream(object):
@@ -214,11 +210,8 @@ class Stream(object):
         self.body = None
         self.retry_time = self.retry_time_start
         self.snooze_time = self.snooze_time_step
-    
-
 
     def new_session(self):
-        
         self.session = requests.Session()
         self.session.proxies = self.proxyServer
         self.session.headers = self.headers
@@ -231,7 +224,7 @@ class Stream(object):
         # Connect and process the stream
         error_counter = 0
         resp = None
-        exception = None
+        exc_info = None
         while self.running:
             if self.retry_count is not None:
                 if error_counter > self.retry_count:
@@ -268,7 +261,7 @@ class Stream(object):
                 # If it's not time out treat it like any other exception
                 if isinstance(exc, ssl.SSLError):
                     if not (exc.args and 'timed out' in str(exc.args[0])):
-                        exception = exc
+                        exc_info = sys.exc_info()
                         break
                 if self.listener.on_timeout() is False:
                     break
@@ -278,7 +271,7 @@ class Stream(object):
                 self.snooze_time = min(self.snooze_time + self.snooze_time_step,
                                        self.snooze_time_cap)
             except Exception as exc:
-                exception = exc
+                exc_info = sys.exc_info()
                 # any other exception is fatal, so kill loop
                 break
 
@@ -289,17 +282,24 @@ class Stream(object):
 
         self.new_session()
 
-        if exception:
+        if exc_info:
             # call a handler first so that the exception can be logged.
-            self.listener.on_exception(exception)
-            raise
+            self.listener.on_exception(exc_info[1])
+            six.reraise(*exc_info)
 
     def _data(self, data):
         if self.listener.on_data(data) is False:
             self.running = False
 
     def _read_loop(self, resp):
-        buf = ReadBuffer(resp.raw, self.chunk_size)
+        charset = resp.headers.get('content-type', default='')
+        enc_search = re.search('charset=(?P<enc>\S*)', charset)
+        if enc_search is not None:
+            encoding = enc_search.group('enc')
+        else:
+            encoding = 'utf-8'
+
+        buf = ReadBuffer(resp.raw, self.chunk_size, encoding=encoding)
 
         while self.running and not resp.raw.closed:
             length = 0
@@ -307,14 +307,14 @@ class Stream(object):
                 line = buf.read_line().strip()
                 if not line:
                     self.listener.keep_alive()  # keep-alive new lines are expected
-                elif line.isdigit():
+                elif line.strip().isdigit():
                     length = int(line)
                     break
                 else:
                     raise TweepError('Expecting length, unexpected value found')
 
             next_status_obj = buf.read_len(length)
-            if self.running:
+            if self.running and next_status_obj:
                 self._data(next_status_obj)
 
             # # Note: keep-alive newlines might be inserted before each length value.
@@ -403,17 +403,19 @@ class Stream(object):
         self.url = '/%s/statuses/retweet.json' % STREAM_VERSION
         self._start(async)
 
-    def sample(self, async=False, languages=None):
+    def sample(self, async=False, languages=None, stall_warnings=False):
         self.session.params = {'delimited': 'length'}
         if self.running:
             raise TweepError('Stream object already connected!')
         self.url = '/%s/statuses/sample.json' % STREAM_VERSION
         if languages:
             self.session.params['language'] = ','.join(map(str, languages))
+        if stall_warnings:
+            self.session.params['stall_warnings'] = 'true'
         self._start(async)
 
     def filter(self, follow=None, track=None, async=False, locations=None,
-               stall_warnings=False, languages=None, encoding='utf8'):
+               stall_warnings=False, languages=None, encoding='utf8', filter_level=None):
         self.body = {}
         self.session.headers['Content-type'] = "application/x-www-form-urlencoded"
         if self.running:
@@ -432,6 +434,8 @@ class Stream(object):
             self.body['stall_warnings'] = stall_warnings
         if languages:
             self.body['language'] = u','.join(map(str, languages))
+        if filter_level:
+            self.body['filter_level'] = filter_level.encode(encoding)
         self.session.params = {'delimited': 'length'}
         self.host = 'stream.twitter.com'
         self._start(async)

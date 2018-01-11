@@ -4,6 +4,7 @@ __author__ = 'denisantyukhov'
 
 import base64
 from blowfish import Blowfish
+from subprocess import Popen, PIPE
 from utils import decorate, progress
 from tqdm import tqdm
 import time
@@ -14,7 +15,8 @@ import sys
 import os
 import re
 
-from config import salt, proxy_base, proxy_query, ip_url
+from config import salt, ip_url
+
 
 class Loki():
 
@@ -121,18 +123,22 @@ class Loki():
         pas = []
         while len(pas) < n:
             pas, fal = [], []
-            myProxyList = load_proxies(proxy_query)
+            myProxyList = get_proxies()
             print 'fetched', len(myProxyList), 'proxies, validating'
             bar = tqdm(total=n)
             for i in myProxyList:
-            
+                
                 if len(pas) < n:
+                    pas.append(i)
+                    bar.update(1)
+                    """
                     t = checkOut(i)
                     if t:
                         pas.append(t)
-                        bar.update(1)
+                        
                     else:
                         fal.append(t)
+                    """
                 else: break
         return pas
 
@@ -147,45 +153,17 @@ class Loki():
                 pass
 
 
-def load_proxies(sqr):
-    r = []
-    for i in range(1,5):
-        q = sqr.replace('/pg','/' + str(i))
-        r.append(scrape_hma(q))
-        time.sleep(2)
-    p = ''.join(r)
-    ip_p = [ip.split('//')[1] for ip in p.split('\n') if len(ip.split('//'))==2]
-    myProxyList = [{'http': v} for v in ip_p]
-    return myProxyList
-
-
-def scrape_hma(uri):
-    r = requests.get(proxy_base+uri)
-    bad_class="("
-    for line in r.text.splitlines():
-        class_name = re.search(r'\.([a-zA-Z0-9_\-]{4})\{display:none\}', line)
-        if class_name is not None:
-           bad_class += class_name.group(1)+'|'
-
-    bad_class = bad_class.rstrip('|')
-    bad_class += ')'
-
-    to_remove = '(<span class\="'+ bad_class + '">[0-9]{1,3}</span>|<span style=\"display:(none|inline)\">[0-9]{1,3}</span>|<div style="display:none">[0-9]{1,3}</div>|<span class="[a-zA-Z0-9_\-]{1,4}">|</?span>|<span style="display: inline">)'
-
-    junk = re.compile(to_remove, flags=re.M)
-    junk = junk.sub('', r.text)
-    junk = junk.replace("\n", "")
-
-    proxy_src = re.findall('([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\s*</td>\s*<td>\s*([0-9]{2,6}).{100,1200}(socks4/5|HTTPS?)', junk)
-    list = ''
-    for src in proxy_src:
-        if src[2] == 'socks4/5':
-            proto = 'socks5h'
-        else:
-            proto = src[2].lower()
-        if src:
-            list += proto + '://' +src[0] + ':' + src[1] + '\n'
-    return(list)
+def get_proxies():
+    proc = Popen(
+        '''python2 fetch.py --anonymity "anonymous|elite" --threads 16 --type "http"''',
+        shell=True,
+        stdout=PIPE, stderr=PIPE
+    )
+    proc.wait()
+    res = proc.communicate()
+    urls = [{'http': t.strip().split()[0].split("//")[1]} 
+            for t in res[0].split("\n") if 'http' in t]
+    return urls
 
 
 def checkOut(ip):

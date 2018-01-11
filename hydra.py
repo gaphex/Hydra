@@ -31,7 +31,7 @@ class Hydra():
         self.lifespan = lifespan
         self.processes = []
         self.location = loc
-        self.version = '1.07a'
+        self.version = '1.08'
         self.proxyList = None
         self.streaming = False
         self.processed = False
@@ -126,7 +126,7 @@ class Hydra():
 
     def process(self):
         batchspan = int(self.lifespan)
-        r = 240
+        r = 300
 
         self.processed = False
         while True:
@@ -158,12 +158,19 @@ class Hydra():
         return auths
 
     def openStream(self, auth ,mode, filter, pID, pDesc, proxy, dataHandler, streamHandler):
-        sapi = Stream(auth, CustomStreamListener(dataHandler, streamHandler, pID, pDesc), pID, proxy)
-
-        if mode == 'morph':
-            sapi.filter(track=filter)
-        elif mode == 'geo':
-            sapi.filter(locations=filter)
+        
+        while True:
+            try:
+                print("Creating new Stream")
+                time.sleep(0.1)
+                sapi = Stream(auth, CustomStreamListener(dataHandler, streamHandler, pID, pDesc), pID, proxy)
+                if mode == 'morph':
+                    sapi.filter(track=filter)
+                elif mode == 'geo':
+                    sapi.filter(locations=filter)
+            except Exception as e:
+                print("Streaming exception")
+                print(e)
 
 
 if __name__ == "__main__":
@@ -174,6 +181,7 @@ if __name__ == "__main__":
     db = db_type
     nP = n_streams
 
+    _Loki = Loki()
     
     locs = []
     if len(sys.argv) > 1:
@@ -186,16 +194,17 @@ if __name__ == "__main__":
                 mode = 'loc'
         nP = len(locs)
 
-    Loki = Loki()
+    
 
 
     while True:
         try:
-            Loki.decryptFile(keychain)
-            hydra = Hydra(nP, masterLock, mode, db, keychain, Loki, locs)
+            _Loki.decryptFile(keychain)
+            hydra = Hydra(nP, masterLock, mode, db, keychain, _Loki, locs)
             hydra.run()
             
         except Exception as e:
-            Loki.encryptFile(keychain)
+            _Loki.fetchProxies(self.threads)
+            # Loki.encryptFile(keychain)
             print e, 'exception caught while running Hydra'
             time.sleep(3)

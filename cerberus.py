@@ -1,9 +1,12 @@
 __author__ = 'denisantyukhov'
 from multiprocessing import Queue
 from pymongo import MongoClient
-from datetime import datetime
+from datetime import datetime, timedelta
 from oracle import Oracle
 from meta import geodata
+from coinmarketcap import Market
+
+
 import _sqlite3
 import json
 
@@ -20,6 +23,7 @@ class Cerberus(object):
         self.json_db_filename = json_db
         self.SQL_db_filename = sql_db
         self.nbatches = 0
+        self.market = Market()
         self.initResources()
 
     def initResources(self):
@@ -135,10 +139,25 @@ class Cerberus(object):
                     score = 0
                     for i, buf in enumerate(buffers):
                         col = self.dbs[i]
+                        objs = []
+                        
                         for obj in buf:
-                            tid = obj.json['id_str']
                             cat = date_convert(obj.json['created_at'])
-                            self.db[col].insert_one({'created': cat, 'payload':obj.json})
+                            objs.append({'created': cat, 'payload':obj.json})
+                        try:
+                            if len(objs):
+                                self.db[col].insert_many(objs)
+                        except Exception as e:
+                            print(e)
+                            raise
+                        
+                        try:
+                            price = {'created': datetime.now() - timedelta(hours = 3),
+                                     'payload':self.market.ticker(col)[0]}
+                            self.db[col+'_price'].insert_one(price)
+                        except Exception as e:
+                            print(e)
+                            raise
 
                     self.printScore(batch_cnt)
 
